@@ -11,7 +11,7 @@ ruler = nlp.add_pipe("entity_ruler", before="ner")
 patterns = []
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-patterns_path = os.path.join(script_dir, "pakistani_names.jsonl")
+patterns_path = os.path.join(script_dir, "../data/pakistani_names.jsonl")
 
 with open(patterns_path, "r", encoding="utf-8") as r_file:
     for line in r_file:

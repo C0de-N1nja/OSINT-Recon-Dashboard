@@ -117,7 +117,7 @@ exports.runTargetedScrape = async function(req, res) {
             }
             
             console.log(`[SCRAPE] Running GitHub scraper for ${username}...`);
-            const command = `python3 ./python/github_scraper.py "${username}"`;
+            const command = `python3 ./python/scrapers/github_scraper.py "${username}"`;
             
             exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function(err, stdout){
                 if (isCompleted == true) {
@@ -154,7 +154,7 @@ exports.runTargetedScrape = async function(req, res) {
             }
             
             console.log(`[SCRAPE] Running Twitter scraper for ${username}...`);
-            const command = `python3 ./python/twitter_scraper.py "${username}"`;
+            const command = `python3 ./python/scrapers/twitter_scraper.py "${username}"`;
             
             exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function(err, stdout){
                 if (isCompleted == true) {
@@ -189,7 +189,7 @@ exports.runTargetedScrape = async function(req, res) {
             }
             
             console.log(`[SCRAPE] Running Instagram scraper for ${username}...`);
-            const command = `python3 ./python/instagram_scraper.py "${username}"`;
+            const command = `python3 ./python/scrapers/instagram_scraper.py "${username}"`;
             
             exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function(err, stdout){
                 if (isCompleted == true) {
@@ -236,7 +236,7 @@ exports.runTargetedScrape = async function(req, res) {
                 if (allBiosText) {
                     console.log('[NLP] Running entity extraction...');
                     const safeBioText = `"${allBiosText.replace(/"/g, '\\"')}"`;
-                    const command = `python3 ./python/bio_entity_extractor.py ${safeBioText}`;
+                    const command = `python3 ./python/ai/bio_entity_extractor.py ${safeBioText}`;
                     
                     exec(command, { timeout: 30000, killSignal: 'SIGKILL' }, async function(err, stdout){
                         if (isCompleted == true) {
