@@ -1,0 +1,30 @@
+.platform-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+.card pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: #1a1a1a;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: inherit;
+}
+.entity-list {
+    font-style: italic;
+    color: #00ffaa;
+}
+.platform-list {
+    list-style-type: none;
+    padding: 0;
+}
+.platform-list li {
+    margin-bottom: 5px;
+}
+.action-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}

@@ -1,0 +1,16 @@
+<%- include('partials/header', { pageName: 'home' }) %>
+
+<div class="card">
+    <p class="step-indicator">Step 1 of 3: Start New Search</p>
+    <h2>Start New Reconnaissance</h2>
+    <p>Enter a username to begin scanning for a public digital footprint.</p>
+
+    <form id="recon-form" action="/recon/start" method="POST" class="recon-form">
+        <input type="text" name="username" placeholder="Enter target username..." required>
+        <button type="submit">Start Username Search</button>
+    </form>
+
+    <div id="loading-spinner" class="spinner"></div>
+</div>
+
+<%- include('partials/footer') %>

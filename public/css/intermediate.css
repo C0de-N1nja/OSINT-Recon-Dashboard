@@ -1,0 +1,37 @@
+.platform-list {
+    list-style-type: none;
+    padding: 0;
+}
+.platform-list li {
+    margin-bottom: 5px;
+}
+.scrape-form h3 {
+    margin-top: 2rem;
+}
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    margin: 1rem 0;
+    font-size: 1.2rem;
+}
+.checkbox-wrapper input[type="checkbox"] {
+    margin-right: 12px;
+    transform: scale(1.3);
+}
+.checkbox-wrapper label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.checkbox-wrapper label.disabled {
+    color: #666;
+}
+.checkbox-wrapper i {
+    font-size: 1.5rem;
+}
+.action-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}

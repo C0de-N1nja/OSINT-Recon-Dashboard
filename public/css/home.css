@@ -1,0 +1,14 @@
+.recon-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+}
+.recon-form input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: #e0e0e0;
+    font-size: 1rem;
+}
