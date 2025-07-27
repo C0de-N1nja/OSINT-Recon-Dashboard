@@ -1,0 +1,19 @@
+# === Core NLP & AI Modules ===
+spacy==3.7.2
+langdetect==1.0.9
+
+# === Scraping & Web Interaction ===
+beautifulsoup4==4.12.3
+requests==2.31.0
+selenium==4.21.0
+undetected-chromedriver==3.5.5
+
+# === Data Handling ===
+lxml==5.2.1
+tqdm==4.66.4
+
+# === CLI & Debugging ===
+colorama==0.4.6
+
+# === Optional (for JSON/YAML/config parsing if used later) ===
+pyyaml==6.0.1
