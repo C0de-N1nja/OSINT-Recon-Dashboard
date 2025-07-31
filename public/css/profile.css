@@ -28,3 +28,25 @@
     display: flex;
     gap: 1rem;
 }
+
+.risk-score {
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.risk-score.low {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.risk-score.medium {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.risk-score.high {
+    background-color: #f8d7da;
+    color: #721c24;
+}
