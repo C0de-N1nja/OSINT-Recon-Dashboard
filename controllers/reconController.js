@@ -1,6 +1,7 @@
 const { exec } = require("child_process");
 const reconProfile = require("../models/ReconProfile");
 const path = require('path');
+const { calculateRiskScore } = require("../utils/enrichment"); // Add this import
 
 exports.renderHome = function (req, res) {
     res.render("index", { pageName: 'home' });
@@ -244,61 +245,15 @@ exports.runTargetedScrape = async function (req, res) {
                         }
 
                         try {
-                            let score = 0;
-                            const factors = [];
+                            // Calculate risk score using the new function
+                            const riskScoreResult = calculateRiskScore(updatedProfile);
+                            updatedProfile.riskScore = {
+                                score: riskScoreResult.score,
+                                label: riskScoreResult.label,
+                                breakdown: riskScoreResult.breakdown // Store breakdown for display
+                            };
+                            console.log(`Risk score for ${username}: ${riskScoreResult.score} (${riskScoreResult.label}), Breakdown: ${JSON.stringify(riskScoreResult.breakdown, null, 2)}`);
 
-                            if (Array.isArray(updatedProfile.usernameResults)) {
-                                const platformCount = updatedProfile.usernameResults.filter(
-                                    result => result.status === "Found"
-                                ).length;
-                                score += platformCount * 10;
-                                factors.push(`${platformCount} platforms: ${platformCount * 10}`);
-                            }
-
-                            if (allBiosText) {
-                                score += 10;
-                                factors.push("Bio present: 10");
-                                if (allBiosText.length > 50) {
-                                    score += 5;
-                                    factors.push("Bio >50 chars: 5");
-                                }
-                            }
-
-                            const orgCount = (updatedProfile.extractedEntities?.ORG?.length || 0) +
-                                (updatedProfile.enrichedEntities?.ORG?.length || 0);
-                            if (orgCount > 0) {
-                                const orgPoints = Math.min(orgCount, 2) * 15;
-                                score += orgPoints;
-                                factors.push(`${orgCount} ORG entities: ${orgPoints}`);
-                            }
-
-                            const locCount = (updatedProfile.extractedEntities?.GPE?.length || 0) +
-                                (updatedProfile.extractedEntities?.LOC?.length || 0);
-                            let locPoints = locCount * 10;
-                            const enrichedLocCount = (updatedProfile.enrichedEntities?.GPE?.length || 0) +
-                                (updatedProfile.enrichedEntities?.LOC?.length || 0);
-                            if (enrichedLocCount > 0) {
-                                locPoints += 5;
-                            }
-                            locPoints = Math.min(locPoints, 15);
-                            if (locCount > 0 || enrichedLocCount > 0) {
-                                score += locPoints;
-                                factors.push(`${locCount} GPE/LOC + ${enrichedLocCount} enriched: ${locPoints}`);
-                            }
-
-                            score = Math.min(score, 100);
-
-                            let label = "Low";
-                            if (score > 70) label = "High";
-                            else if (score > 30) label = "Medium";
-
-                            updatedProfile.riskScore = { score, label };
-                            console.log(`Risk score for ${username}: ${score} (${label}), Factors: ${factors.join(", ")}`);
-                        } catch (scoreErr) {
-                            console.log("Risk scoring failed:", scoreErr.message);
-                        }
-
-                        try {
                             updatedProfile.status = 'scraping_complete';
                             await updatedProfile.save();
                             console.log(`[SUCCESS] Full scrape complete. Redirecting to final profile...`);
@@ -314,21 +269,14 @@ exports.runTargetedScrape = async function (req, res) {
                     });
                 } else {
                     try {
-                        let score = 0;
-                        const factors = [];
-
-                        if (Array.isArray(updatedProfile.usernameResults)) {
-                            const platformCount = updatedProfile.usernameResults.filter(
-                                result => result.status === "Found"
-                            ).length;
-                            score += platformCount * 10;
-                            factors.push(`${platformCount} platforms: ${platformCount * 10}`);
-                        }
-
-                        score = Math.min(score, 100);
-                        let label = score > 30 ? "Medium" : "Low";
-                        updatedProfile.riskScore = { score, label };
-                        console.log(`Risk score for ${username}: ${score} (${label}), Factors: ${factors.join(", ")}`);
+                        // Calculate risk score even if no bios are found
+                        const riskScoreResult = calculateRiskScore(updatedProfile);
+                        updatedProfile.riskScore = {
+                            score: riskScoreResult.score,
+                            label: riskScoreResult.label,
+                            breakdown: riskScoreResult.breakdown // Store breakdown for display
+                        };
+                        console.log(`Risk score for ${username}: ${riskScoreResult.score} (${riskScoreResult.label}), Breakdown: ${JSON.stringify(riskScoreResult.breakdown, null, 2)}`);
 
                         updatedProfile.status = 'scraping_complete';
                         await updatedProfile.save();

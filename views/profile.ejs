@@ -9,19 +9,51 @@
     </div>
 
     <!-- Risk Score Card -->
-    <div class="card">
-        <h3><i class="fa-solid fa-exclamation-triangle"></i> Risk Assessment</h3>
-        <% if (profile.riskScore && profile.riskScore.score !==undefined) { %>
-            <p>
-                <strong>Risk Score:</strong>
-                <span class="risk-score <%= profile.riskScore.label.toLowerCase() %>">
-                    <%= profile.riskScore.score %> (<%= profile.riskScore.label %>)
-                </span>
-            </p>
-            <% } else { %>
-                <p class="no-results">No risk score available.</p>
+<div class="card">
+    <h3><i class="fa-solid fa-exclamation-triangle"></i> Risk Assessment</h3>
+    <% if (profile.riskScore && profile.riskScore.score !== undefined) { %>
+        <p>
+            <strong>Risk Score:</strong>
+            <span class="risk-score <%= profile.riskScore.label.toLowerCase() %>">
+                <%= profile.riskScore.score %> (<%= profile.riskScore.label %>)
+            </span>
+        </p>
+        <% if (profile.riskScore.breakdown) { %>
+            <p><strong>Score Breakdown:</strong></p>
+            <ul class="platform-list">
+                <% if (profile.riskScore.breakdown.initialScan > 0) { %>
+                    <li>Initial Scan (<%= profile.riskScore.breakdown.initialScan %>): <%= profile.riskScore.breakdown.initialScan / 2 %> platforms found</li>
                 <% } %>
-    </div>
+                <% if (profile.riskScore.breakdown.deepScrape.github > 0) { %>
+                    <li>GitHub Profile (<%= profile.riskScore.breakdown.deepScrape.github %>): Bio or Organization present</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.deepScrape.twitter > 0) { %>
+                    <li>Twitter Profile (<%= profile.riskScore.breakdown.deepScrape.twitter %>): Bio, Location, or Website present</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.deepScrape.instagram > 0) { %>
+                    <li>Instagram Profile (<%= profile.riskScore.breakdown.deepScrape.instagram %>): Bio or Website present</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.pii.person > 0) { %>
+                    <li>Person Entities (<%= profile.riskScore.breakdown.pii.person %>): <%= profile.riskScore.breakdown.pii.person / 10 %> names detected</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.pii.location > 0) { %>
+                    <li>Location Entities (<%= profile.riskScore.breakdown.pii.location %>): <%= profile.riskScore.breakdown.pii.location / 10 %> locations detected</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.professional.organization > 0) { %>
+                    <li>Organization Entities (<%= profile.riskScore.breakdown.professional.organization %>): <%= profile.riskScore.breakdown.professional.organization / 15 %> organizations detected</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.engagement.followers > 0) { %>
+                    <li>Follower Count (<%= profile.riskScore.breakdown.engagement.followers %>): Significant followers detected</li>
+                <% } %>
+                <% if (profile.riskScore.breakdown.engagement.verified > 0) { %>
+                    <li>Verified Status (<%= profile.riskScore.breakdown.engagement.verified %>): Verified account detected</li>
+                <% } %>
+            </ul>
+        <% } %>
+    <% } else { %>
+        <p class="no-results">No risk score available.</p>
+    <% } %>
+</div>
 
     <!-- Action Buttons Card -->
     <div class="card">
