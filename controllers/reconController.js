@@ -15,7 +15,7 @@ exports.startInitialScan = function (req, res) {
 
     const file_path = `python3 ./python/username_tracker.py ${username}`;
 
-    exec(file_path, { timeout: 180000 }, async function (err, stdout) {
+    exec(file_path, { timeout: 240000 }, async function (err, stdout) {
         if (err) {
             console.log("Username tracker failed:", err);
             return res.status(500).send("Username search failed. Please try again.");

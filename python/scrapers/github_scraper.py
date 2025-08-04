@@ -3,6 +3,7 @@ import requests
 import json
 import sys
 import random
+import time
 
 class ProfileScraper:
     def __init__(self):
@@ -45,19 +46,40 @@ class ProfileScraper:
             "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
         ]
 
-    def scrape_github_profile(self, username):
+    def extract_with_fallbacks(self, soup, selectors_list, debug_field=None):
+        """
+        Try multiple selectors until one works
+        """
+        for i, selector in enumerate(selectors_list):
+            try:
+                element = soup.select_one(selector)
+                if element:
+                    text = element.get_text(strip=True)
+                    if text:
+                        if debug_field:
+                            print(f"[DEBUG] {debug_field}: Found with selector #{i}: '{selector}' -> '{text[:50]}...'", file=sys.stderr)
+                        return text
+            except Exception as e:
+                if debug_field:
+                    print(f"[DEBUG] {debug_field}: Selector '{selector}' failed: {e}", file=sys.stderr)
+                continue
+        
+        if debug_field:
+            print(f"[DEBUG] {debug_field}: All selectors failed", file=sys.stderr)
+        return ""
+
+    def scrape_github_profile(self, username, debug=False):
         random_user_agents = random.choice(self.user_agents)
 
         headers = {
-            "User-Agent": random_user_agents
+            "User-Agent": random_user_agents,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
         }
-
-        bio_text_str = ""
-        org_text_str = ""
-        location_text_str = ""
-        website_text_str = ""
-        followers_count_str = ""
-        following_count_str = ""
 
         social_media_dict = {
             "facebook": "", "snapchat": "", "instagram": "", "threads": "",
@@ -68,20 +90,95 @@ class ProfileScraper:
         url = f"https://github.com/{username}"
 
         try:    
-            response = requests.get(url, headers=headers, timeout=8)
+            time.sleep(random.uniform(1, 3))
+            
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, "html.parser")
-            bio_element = soup.select_one(".user-profile-bio")
-            organization_element = soup.select_one("span.p-org")
-            location_element = soup.select_one("span.p-label")
-            website_link_element = soup.select_one("li[itemprop='url'] a")
-            all_links_elements = soup.select("a.Link--primary.wb-break-all")
-            followers_element = soup.select_one("a[href$='?tab=followers'] span.text-bold")
-            following_element = soup.select_one("a[href$='?tab=following'] span.text-bold")
+            if debug:
+                print(f"[DEBUG] Response status: {response.status_code}", file=sys.stderr)
+                print(f"[DEBUG] Response length: {len(response.text)}", file=sys.stderr)
 
-            if website_link_element:
-                found_url = website_link_element.get('href', '').strip()
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            bio_selectors = [
+                '[data-bio-text]',
+                '.p-note.user-profile-bio div',
+                '.p-note.user-profile-bio',
+                '.user-profile-bio .p-note',
+                '.js-profile-editable-area .p-note',
+                '[data-target="user-profile-frame.bioText"]',
+                '.h-card .p-note',
+                'div[data-bio-text]',
+                '.profile-bio',
+                '.bio .p-note'
+            ]
+
+            org_selectors = [
+                '[itemprop="worksFor"]',
+                'span.p-org div',
+                'span.p-org',
+                '[data-test-selector="profile-company-link"]',
+                '.vcard-detail[itemprop="worksFor"]',
+                '.vcard-detail .p-org',
+                'li[itemprop="worksFor"] span',
+                'li[itemprop="worksFor"]'
+            ]
+
+            location_selectors = [
+                '[itemprop="homeLocation"]',
+                'span.p-label',
+                '[data-test-selector="profile-location"]',
+                '.vcard-detail[itemprop="homeLocation"]',
+                '.vcard-detail .p-label',
+                'li[itemprop="homeLocation"] span',
+                'li[itemprop="homeLocation"]',
+                '.octicon-location + span'
+            ]
+
+            website_selectors = [
+                'li[itemprop="url"] a',
+                '[data-test-selector="profile-website-url"]',
+                '.vcard-detail[itemprop="url"] a',
+                '.vcard-detail a[rel="nofollow me"]',
+                'a.Link--primary[rel="nofollow me"]'
+            ]
+
+            followers_selectors = [
+                'a[href$="?tab=followers"] .text-bold',
+                'a[href$="?tab=followers"] strong',
+                f'a[href="/{username}?tab=followers"] .text-bold',
+                f'a[href="/{username}?tab=followers"] strong',
+                '.js-profile-editable-area a[href*="followers"] .text-bold'
+            ]
+
+            following_selectors = [
+                'a[href$="?tab=following"] .text-bold',
+                'a[href$="?tab=following"] strong',
+                f'a[href="/{username}?tab=following"] .text-bold',
+                f'a[href="/{username}?tab=following"] strong',
+                '.js-profile-editable-area a[href*="following"] .text-bold'
+            ]
+
+            bio_text_str = self.extract_with_fallbacks(soup, bio_selectors, "BIO" if debug else None)
+            org_text_str = self.extract_with_fallbacks(soup, org_selectors, "ORG" if debug else None)
+            location_text_str = self.extract_with_fallbacks(soup, location_selectors, "LOCATION" if debug else None)
+            followers_count_str = self.extract_with_fallbacks(soup, followers_selectors, "FOLLOWERS" if debug else None)
+            following_count_str = self.extract_with_fallbacks(soup, following_selectors, "FOLLOWING" if debug else None)
+
+            website_text_str = ""
+            website_element = None
+            
+            for selector in website_selectors:
+                try:
+                    website_element = soup.select_one(selector)
+                    if website_element:
+                        break
+                except:
+                    continue
+
+            if website_element:
+                found_url = website_element.get('href', '').strip()
                 
                 if "facebook.com" in found_url:
                     social_media_dict["facebook"] = found_url
@@ -106,54 +203,51 @@ class ProfileScraper:
                 else:
                     website_text_str = found_url
 
-            for link in all_links_elements:
-                href = link.get("href", "")
-                if href and href != website_text_str: 
-                    if "facebook.com" in href:
-                        social_media_dict["facebook"] = href
-                    elif "instagram.com" in href:
-                        social_media_dict["instagram"] = href
-                    elif "snapchat.com" in href:
-                        social_media_dict["snapchat"] = href
-                    elif "threads.net" in href:
-                        social_media_dict["threads"] = href
-                    elif "twitter.com" in href or "x.com" in href:
-                        social_media_dict["twitter"] = href
-                    elif "linkedin.com" in href:
-                        social_media_dict["linkedin"] = href
-                    elif "tiktok.com" in href:
-                        social_media_dict["tiktok"] = href
-                    elif "reddit.com" in href:
-                        social_media_dict["reddit"] = href
-                    elif "discord.gg" in href or "discord.com" in href:
-                        social_media_dict["discord"] = href
-                    elif "youtube.com" in href:
-                        social_media_dict["youtube"] = href
+            all_links_selectors = [
+                "a.Link--primary.wb-break-all",
+                "a.Link--primary",
+                ".vcard-detail a[rel='nofollow me']",
+                ".vcard-details a[href*='://']"
+            ]
 
-            if bio_element:
-                bio_text_str = bio_element.get_text(strip=True)
-            else:
-                bio_text_str = ""
-            
-            if organization_element:
-                org_text_str = organization_element.get_text(strip=True)
-            else:
-                org_text_str = ""
+            for selector in all_links_selectors:
+                try:
+                    all_links_elements = soup.select(selector)
+                    for link in all_links_elements:
+                        href = link.get("href", "")
+                        if href and href != website_text_str: 
+                            if "facebook.com" in href:
+                                social_media_dict["facebook"] = href
+                            elif "instagram.com" in href:
+                                social_media_dict["instagram"] = href
+                            elif "snapchat.com" in href:
+                                social_media_dict["snapchat"] = href
+                            elif "threads.net" in href:
+                                social_media_dict["threads"] = href
+                            elif "twitter.com" in href or "x.com" in href:
+                                social_media_dict["twitter"] = href
+                            elif "linkedin.com" in href:
+                                social_media_dict["linkedin"] = href
+                            elif "tiktok.com" in href:
+                                social_media_dict["tiktok"] = href
+                            elif "reddit.com" in href:
+                                social_media_dict["reddit"] = href
+                            elif "discord.gg" in href or "discord.com" in href:
+                                social_media_dict["discord"] = href
+                            elif "youtube.com" in href:
+                                social_media_dict["youtube"] = href
+                    break
+                except:
+                    continue
 
-            if location_element:
-                location_text_str = location_element.get_text(strip=True)
-            else:
-                location_text_str = ""
-
-            if followers_element:
-                followers_count_str = followers_element.get_text(strip=True)
-            else:
-                followers_count_str = ""
-            
-            if following_element:
-                following_count_str = following_element.get_text(strip=True)
-            else:
-                following_count_str = ""
+            if debug:
+                print(f"[DEBUG] Final results:", file=sys.stderr)
+                print(f"[DEBUG] Bio: '{bio_text_str}'", file=sys.stderr)
+                print(f"[DEBUG] Org: '{org_text_str}'", file=sys.stderr)
+                print(f"[DEBUG] Location: '{location_text_str}'", file=sys.stderr)
+                print(f"[DEBUG] Website: '{website_text_str}'", file=sys.stderr)
+                print(f"[DEBUG] Followers: '{followers_count_str}'", file=sys.stderr)
+                print(f"[DEBUG] Following: '{following_count_str}'", file=sys.stderr)
             
         except requests.exceptions.RequestException as error:
             error_output = {
@@ -178,9 +272,10 @@ class ProfileScraper:
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         username = sys.argv[1]
+        debug = len(sys.argv) > 2 and sys.argv[2] == "--debug"
         
         scraper = ProfileScraper()
         
-        result = scraper.scrape_github_profile(username)
+        result = scraper.scrape_github_profile(username, debug=debug)
     
         print(json.dumps(result, indent=2, ensure_ascii=False))

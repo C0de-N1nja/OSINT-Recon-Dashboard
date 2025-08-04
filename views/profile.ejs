@@ -55,54 +55,55 @@
     </div>
 
     <!-- GitHub Card -->
-    <% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('github')) { %>
-        <div class="card">
-            <h3><i class="fa-brands fa-github"></i> GitHub Profile Details</h3>
-            <% if (profile.gitHubData && profile.gitHubData.bio_text) { %>
-                <p><strong>URL:</strong> <a href="https://github.com/<%= profile.primaryUsername %>"
-                        target="_blank">https://github.com/<%= profile.primaryUsername %></a></p>
-                <p><strong>Bio:</strong>
-                    <%= profile.gitHubData.bio_text || 'N/A' %>
-                </p>
-                <p><strong>Organization:</strong>
-                    <%= profile.gitHubData.org || 'N/A' %>
-                </p>
-                <p><strong>Location:</strong>
-                    <%= profile.gitHubData.location || 'N/A' %>
-                </p>
-                <p><strong>Website:</strong>
-                    <%= profile.gitHubData.website || 'N/A' %>
-                </p>
-                <p><strong>Followers:</strong>
-                    <%= profile.gitHubData.followers_count || 'N/A' %>
-                </p>
-                <p><strong>Following:</strong>
-                    <%= profile.gitHubData.following_count || 'N/A' %>
-                </p>
-                <% if (profile.gitHubData.social_media && Object.keys(profile.gitHubData.social_media).length> 0) { %>
-                    <p><strong>Social Media Links (from GitHub):</strong></p>
-                    <ul class="platform-list">
-                        <% for (const [platform, url] of Object.entries(profile.gitHubData.social_media)) { %>
-                            <% if (url) { %>
-                                <li>
-                                    <strong>
-                                        <%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:
-                                    </strong>
-                                    <a href="<%= url %>" target="_blank">
-                                        <%= url %>
-                                    </a>
-                                </li>
-                                <% } %>
-                                    <% } %>
-                    </ul>
+<% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('github')) { %>
+    <div class="card">
+        <h3><i class="fa-brands fa-github"></i> GitHub Profile Details</h3>
+        <% if (profile.gitHubData && (profile.gitHubData.bio_text || profile.gitHubData.org || 
+            profile.gitHubData.location || profile.gitHubData.website || 
+            profile.gitHubData.followers_count || profile.gitHubData.following_count || 
+            (profile.gitHubData.social_media && Object.values(profile.gitHubData.social_media).some(url => url)))) { %>
+            <p><strong>URL:</strong> <a href="https://github.com/<%= profile.primaryUsername %>"
+                    target="_blank">https://github.com/<%= profile.primaryUsername %></a></p>
+            <p><strong>Bio:</strong>
+                <%= profile.gitHubData.bio_text || 'N/A' %>
+            </p>
+            <p><strong>Organization:</strong>
+                <%= profile.gitHubData.org || 'N/A' %>
+            </p>
+            <p><strong>Location:</strong>
+                <%= profile.gitHubData.location || 'N/A' %>
+            </p>
+            <p><strong>Website:</strong>
+                <%= profile.gitHubData.website || 'N/A' %>
+            </p>
+            <p><strong>Followers:</strong>
+                <%= profile.gitHubData.followers_count || 'N/A' %>
+            </p>
+            <p><strong>Following:</strong>
+                <%= profile.gitHubData.following_count || 'N/A' %>
+            </p>
+            <% if (profile.gitHubData.social_media && Object.keys(profile.gitHubData.social_media).length > 0) { %>
+                <p><strong>Social Media Links (from GitHub):</strong></p>
+                <ul class="platform-list">
+                    <% for (const [platform, url] of Object.entries(profile.gitHubData.social_media)) { %>
+                        <% if (url) { %>
+                            <li>
+                                <strong>
+                                    <%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:
+                                </strong>
+                                <a href="<%= url %>" target="_blank">
+                                    <%= url %>
+                                </a>
+                            </li>
+                        <% } %>
                     <% } %>
-                        <% } else { %>
-                            <p class="no-results">Scrape was run, but no detailed profile information was found for
-                                GitHub.</p>
-                            <% } %>
-        </div>
+                </ul>
+            <% } %>
+        <% } else { %>
+            <p class="no-results">Scrape was run, but no detailed profile information was found for GitHub.</p>
         <% } %>
-
+    </div>
+<% } %>
             <!-- Twitter Card -->
             <% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('twitter')) { %>
                 <div class="card">
@@ -208,47 +209,44 @@
                         </div>
                         <% } %>
 
-                            <!-- Extracted Entities Card -->
-                            <% if (profile.extractedEntities && (Object.values(profile.extractedEntities).some(arr=>
-                                arr.length > 0))) { %>
-                                <div class="card">
-                                    <h3><i class="fa-solid fa-brain"></i> AI Intelligence Analysis (Extracted Entities)
-                                    </h3>
-                                    <% if (profile.extractedEntities.PERSON && profile.extractedEntities.PERSON.length>
-                                        0) { %>
-                                        <p><strong>Persons:</strong> <span class="entity-list">
-                                                <%= profile.extractedEntities.PERSON.join(', ') %></span></p>
-        <% } %>
-        <% if (profile.extractedEntities.ORG && profile.extractedEntities.ORG.length > 0) { %>
-            <p><strong>Organizations:</strong> <span class="entity-list"><%= profile.extractedEntities.ORG.join(' , ') %></span></p>
-        <% } %>
-        <% if (profile.extractedEntities.GPE && profile.extractedEntities.GPE.length > 0) { %>
-            <p><strong>Locations (GPE):</strong> <span class="entity-list"><%= profile.extractedEntities.GPE.join(' , ') %></span></p>
-        <% } %>
-        <% if (profile.extractedEntities.LOC && profile.extractedEntities.LOC.length > 0) { %>
-            <p><strong>Locations (General):</strong> <span class="entity-list"><%= profile.extractedEntities.LOC.join('
-                                                    , ') %></span></p>
+<!-- PASTE THIS BLOCK TO REPLACE BOTH THE EXTRACTED AND ENRICHED ENTITY CARDS -->
+
+<!-- Extracted Entities Card -->
+<% if (profile.extractedEntities && Object.values(profile.extractedEntities).some(arr => arr && arr.length > 0)) { %>
+    <div class="card">
+        <h3><i class="fa-solid fa-brain"></i> AI Intelligence Analysis (Extracted Entities)</h3>
+        <% for (const [type, list] of Object.entries(profile.extractedEntities)) { %>
+            <% if (list && list.length > 0) { %>
+                <p>
+                    <strong><%= type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() %>:</strong>
+                    <!-- THE FIX: The .join(', ') is now on a single, valid line -->
+                    <span class="entity-list"><%= list.join(', ') %></span>
+                </p>
+            <% } %>
         <% } %>
     </div>
 <% } %>
 
 <!-- Enriched Entities Card -->
-<% if (profile.enrichedEntities && (Object.values(profile.enrichedEntities).some(arr => arr && arr.length > 0))) { %>
+<% if (profile.enrichedEntities && Object.values(profile.enrichedEntities).some(arr => arr && arr.length > 0)) { %>
     <div class="card">
-        <h3><i class="fa-solid fa-map-marker-alt"></i> Enriched Entities</h3>
-        <% if (profile.enrichedEntities.ORG && profile.enrichedEntities.ORG.length > 0) { %>
-            <p><strong>Enriched Organizations:</strong> <span class="entity-list"><%= profile.enrichedEntities.ORG.join('
-                                                    , ') %></span></p>
-        <% } %>
-        <% if (profile.enrichedEntities.GPE && profile.enrichedEntities.GPE.length > 0) { %>
-            <p><strong>Enriched Locations (GPE):</strong> <span class="entity-list"><%= profile.enrichedEntities.GPE.join('
-                                                    , ') %></span></p>
-        <% } %>
-        <% if (profile.enrichedEntities.LOC && profile.enrichedEntities.LOC.length > 0) { %>
-            <p><strong>Enriched Locations (General):</strong> <span class="entity-list"><%= profile.enrichedEntities.LOC.join('
-                                                    , ') %></span></p>
+        <h3><i class="fa-solid fa-map-marker-alt"></i> Enriched Intelligence Summary</h3>
+        <% for (const [type, list] of Object.entries(profile.enrichedEntities)) { %>
+            <% if (list && list.length > 0) { %>
+                <h4>Enriched <%= type %></h4>
+                <ul class="platform-list">
+                    <% list.forEach(entity => { %>
+                        <li>
+                            <strong><%= entity.text %></strong>
+                            <% if (entity.info) { %>
+                                – <span class="entity-info"><%= entity.info %></span>
+                            <% } %>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } %>
         <% } %>
     </div>
 <% } %>
 
-<%- include(' partials/footer') %>
+<%- include('partials/footer') %>
