@@ -241,7 +241,6 @@
                         </div>
                         <% } %>
 
-<!-- PASTE THIS BLOCK TO REPLACE BOTH THE EXTRACTED AND ENRICHED ENTITY CARDS -->
 
 <!-- Extracted Entities Card -->
 <% if (profile.extractedEntities && Object.values(profile.extractedEntities).some(arr => arr && arr.length > 0)) { %>
@@ -251,7 +250,6 @@
             <% if (list && list.length > 0) { %>
                 <p>
                     <strong><%= type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() %>:</strong>
-                    <!-- THE FIX: The .join(', ') is now on a single, valid line -->
                     <span class="entity-list"><%= list.join(', ') %></span>
                 </p>
             <% } %>
@@ -270,8 +268,10 @@
                     <% list.forEach(entity => { %>
                         <li>
                             <strong><%= entity.text %></strong>
-                            <% if (entity.info) { %>
-                                – <span class="entity-info"><%= entity.info %></span>
+                            <% if (entity.isEnriched) { %>
+                                – <span class="entity-info" style="color: #28a745;"><%= entity.info %></span>
+                            <% } else { %>
+                                – <span class="entity-info" style="color: #ffc107;">[Unverified - Investigation Lead]</span>
                             <% } %>
                         </li>
                     <% }) %>

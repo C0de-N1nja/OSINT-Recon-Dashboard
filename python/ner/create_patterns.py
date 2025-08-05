@@ -1,7 +1,9 @@
 import json
+import os
 
-INPUT_FILE = "raw_names.txt"
-OUTPUT_FILE = "python/pakistani_names.jsonl"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+INPUT_FILE = os.path.join(SCRIPT_DIR, '..', 'data', 'raw_names.txt')
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, '..', 'data', 'pakistani_names.jsonl')
 
 def create_spacy_patterns():
     pattern_count = 0

@@ -1,6 +1,8 @@
 const express = require("express")
 const reconRoutes = require("./routes/reconRoutes")
 const connectDB = require("./config/db")
+const dotenv = require('dotenv');
+dotenv.config();
 
 const PORT = 3000
 const app = express()

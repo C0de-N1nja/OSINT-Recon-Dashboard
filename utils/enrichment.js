@@ -1,4 +1,40 @@
-// utils/enrichment.js
+const fs = require('fs');
+const path = require('path');
+
+const universityDataPath = path.join(__dirname, '../python/data/hec_universities_data.json');
+const universitiesData = JSON.parse(fs.readFileSync(universityDataPath, 'utf8'));
+
+function enrichProfileEntities(profile) {
+    const enrichedData = {
+        ORG: [],
+    };
+
+    if (profile.extractedEntities && profile.extractedEntities.ORG) {
+        profile.extractedEntities.ORG.forEach(orgName => {
+            const foundUni = universitiesData.find(uni =>
+                uni.name.toLowerCase().includes(orgName.toLowerCase()) ||
+                orgName.toLowerCase().includes(uni.name.toLowerCase())
+            );
+
+            if (foundUni) {
+                const infoString = `${foundUni.sector} University in ${foundUni.city}`;
+                enrichedData.ORG.push({
+                    text: orgName,
+                    info: infoString,
+                    isEnriched: true
+                });
+            } else {
+                enrichedData.ORG.push({
+                    text: orgName,
+                    info: null,
+                    isEnriched: false
+                });
+            }
+        });
+    }
+    return enrichedData;
+}
+
 function calculateRiskScore(profile) {
     let score = 0;
     const breakdown = {
@@ -21,7 +57,6 @@ function calculateRiskScore(profile) {
         },
     };
 
-    // 1. Initial Scan (Low Confidence, +2 per platform)
     if (Array.isArray(profile.usernameResults)) {
         const platformCount = profile.usernameResults.filter(
             result => result.status === "Found"
@@ -30,41 +65,37 @@ function calculateRiskScore(profile) {
         score += breakdown.initialScan;
     }
 
-    // 2. Deep Scrape Confirmation (High Confidence)
     if (profile.gitHubData && (profile.gitHubData.bio_text || profile.gitHubData.org)) {
         breakdown.deepScrape.github = 30;
         score += 30;
     }
-    if (profile.twitterData && !profile.twitterData.error && 
+    if (profile.twitterData && !profile.twitterData.error &&
         (profile.twitterData.bio_text || profile.twitterData.location || profile.twitterData.website)) {
         breakdown.deepScrape.twitter = 25;
         score += 25;
     }
-    if (profile.instagramData && !profile.instagramData.error && 
+    if (profile.instagramData && !profile.instagramData.error &&
         (profile.instagramData.bio_text || profile.instagramData.social_media.website)) {
         breakdown.deepScrape.instagram = 20;
         score += 20;
     }
 
-    // 3. PII (from NLP and Deep Scrapes)
     if (profile.extractedEntities?.PERSON?.length > 0) {
         breakdown.pii.person = Math.min(profile.extractedEntities.PERSON.length, 2) * 10;
         score += breakdown.pii.person;
     }
-    const locCount = (profile.extractedEntities?.GPE?.length || 0) + 
-                     (profile.extractedEntities?.LOC?.length || 0);
+    const locCount = (profile.extractedEntities?.GPE?.length || 0) +
+        (profile.extractedEntities?.LOC?.length || 0);
     if (locCount > 0) {
         breakdown.pii.location = Math.min(locCount, 2) * 10;
         score += breakdown.pii.location;
     }
 
-    // 4. Professional Context
     if (profile.extractedEntities?.ORG?.length > 0) {
         breakdown.professional.organization = Math.min(profile.extractedEntities.ORG.length, 2) * 15;
         score += breakdown.professional.organization;
     }
 
-    // 5. Engagement Signals
     let totalFollowers = 0;
     if (profile.twitterData?.followers_count) {
         const followers = parseInt(profile.twitterData.followers_count.replace(/[,KMB]/g, '')) || 0;
@@ -86,10 +117,8 @@ function calculateRiskScore(profile) {
         score += 10;
     }
 
-    // Cap score at 100
     score = Math.min(score, 100);
 
-    // Determine label
     let label = "Low";
     if (score > 70) label = "High";
     else if (score > 30) label = "Medium";
@@ -101,4 +130,7 @@ function calculateRiskScore(profile) {
     };
 }
 
-module.exports = { calculateRiskScore };
+module.exports = {
+    calculateRiskScore,
+    enrichProfileEntities
+};

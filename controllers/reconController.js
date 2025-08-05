@@ -1,7 +1,26 @@
 const { exec } = require("child_process");
 const reconProfile = require("../models/ReconProfile");
 const path = require('path');
-const { calculateRiskScore } = require("../utils/enrichment"); // Add this import
+const { calculateRiskScore, enrichProfileEntities } = require("../utils/enrichment");
+
+
+function executeScript(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, (err, stdout, stderr) => {
+            if (err) {
+                console.error(`Script failed: ${command}`, stderr);
+                return resolve({ error: true, message: err.message, platform: command.split('/').pop().split('.')[0] });
+            }
+            try {
+                const result = JSON.parse(stdout);
+                resolve(result);
+            } catch (parseError) {
+                console.error(`Failed to parse JSON from: ${command}`, stdout);
+                resolve({ error: true, message: "Invalid JSON response", platform: command.split('/').pop().split('.')[0] });
+            }
+        });
+    });
+}
 
 exports.renderHome = function (req, res) {
     res.render("index", { pageName: 'home' });
@@ -14,7 +33,7 @@ exports.startInitialScan = function (req, res) {
         return res.status(400).send("Username is required");
     }
 
-    const file_path = `python3 ./python/username_tracker.py ${username}`;
+    const file_path = `${process.env.PYTHON_COMMAND} ./python/username_tracker.py ${username}`;
 
     exec(file_path, { timeout: 240000 }, async function (err, stdout) {
         if (err) {
@@ -64,259 +83,88 @@ exports.renderIntermediateProfile = async function (req, res) {
 };
 
 exports.runTargetedScrape = async function (req, res) {
-    const profileId = req.body.profileId;
-    const platforms = req.body.platforms;
+    const { profileId, platforms } = req.body;
 
-    const responseTimeout = setTimeout(function () {
-        if (!res.headersSent) {
-            console.log('[ERROR] Scraping timeout - sending error response');
-            res.status(500).send("Scraping timeout. Please try again.");
-        }
-    }, 300000);
-
-    let platformsToScrape = [];
-    if (platforms) {
-        if (Array.isArray(platforms)) {
-            platformsToScrape = platforms;
-        } else {
-            platformsToScrape = [platforms];
-        }
-    }
-
-    if (platformsToScrape.length === 0) {
-        clearTimeout(responseTimeout);
-        return res.redirect(`/profile/intermediate/${profileId}`);
+    if (!profileId || !platforms || platforms.length === 0) {
+        return res.redirect(`/profile/${profileId}`);
     }
 
     try {
-        await reconProfile.findByIdAndUpdate(profileId, {
-            $addToSet: { scrapesAttempted: { $each: platformsToScrape } }
-        });
-
         const profile = await reconProfile.findById(profileId);
         if (!profile) {
-            clearTimeout(responseTimeout);
             return res.status(404).send("Profile not found");
         }
+
+        await reconProfile.findByIdAndUpdate(profileId, {
+            $addToSet: { scrapesAttempted: { $each: Array.isArray(platforms) ? platforms : [platforms] } }
+        });
+
         const username = profile.primaryUsername;
+        const pythonCmd = process.env.PYTHON_COMMAND || 'python3';
 
-        let isCompleted = false;
+        const commands = [];
+        if (platforms.includes('github')) {
+            commands.push(`${pythonCmd} ./python/scrapers/github_scraper.py "${username}"`);
+        }
+        if (platforms.includes('twitter')) {
+            commands.push(`${pythonCmd} ./python/scrapers/twitter_scraper.py "${username}"`);
+        }
+        if (platforms.includes('instagram')) {
+            commands.push(`${pythonCmd} ./python/scrapers/instagram_scraper.py "${username}"`);
+        }
 
-        function safeRespond(callback) {
-            if (!isCompleted && !res.headersSent) {
-                isCompleted = true;
-                clearTimeout(responseTimeout);
-                callback();
+        console.log('[SCRAPE] Running scrapers in parallel...');
+        const scrapeResults = await Promise.all(commands.map(cmd => executeScript(cmd)));
+        console.log('[SCRAPE] All scrapers have completed.');
+
+        scrapeResults.forEach(result => {
+            if (result.error) return;
+            if (result.url && result.url.includes('github')) profile.gitHubData = result;
+            if (result.url && result.url.includes('twitter')) profile.twitterData = result;
+            if (result.url && result.url.includes('instagram')) profile.instagramData = result;
+        });
+
+        let allBiosText = [
+            profile.gitHubData?.bio_text,
+            profile.twitterData?.bio_text,
+            profile.instagramData?.bio_text
+        ].filter(Boolean).join(" ");
+
+        if (allBiosText) {
+            console.log('[NLP] Running entity extraction...');
+            const safeBioText = `"${allBiosText.replace(/"/g, '\\"')}"`;
+            const nlpCommand = `${pythonCmd} ./python/ai/bio_entity_extractor.py ${safeBioText}`;
+
+            const nlpResult = await executeScript(nlpCommand);
+            if (!nlpResult.error) {
+                profile.extractedEntities = nlpResult;
             }
         }
 
-        function runGitHubScraper() {
-            if (isCompleted) return;
+        const enrichedEntities = enrichProfileEntities(profile);
+        profile.enrichedEntities = enrichedEntities;
+        console.log('[ENRICH] Enrichment complete. Found context for ' + (enrichedEntities.ORG?.filter(o => o.info).length || 0) + ' organizations.');
 
-            console.log(`[SCRAPE] Running GitHub scraper for ${username}...`);
-            const command = `python3 ./python/scrapers/github_scraper.py "${username}"`;
+        const riskScoreResult = calculateRiskScore(profile);
+        profile.riskScore = {
+            score: riskScoreResult.score,
+            label: riskScoreResult.label,
+            breakdown: riskScoreResult.breakdown
+        };
 
-            exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function (err, stdout) {
-                if (isCompleted) return;
+        profile.status = 'scraping_complete';
+        await profile.save();
+        console.log(`[SUCCESS] Full process complete. Redirecting to final profile...`);
 
-                if (err) {
-                    console.log("GitHub scraper failed:", err.message);
-                } else {
-                    try {
-                        if (stdout && stdout.trim()) {
-                            const githubData = JSON.parse(stdout);
-                            profile.gitHubData = githubData;
-                            await profile.save();
-                        }
-                    } catch (e) {
-                        console.log("Failed to parse GitHub JSON:", stdout);
-                    }
-                }
+        res.redirect(`/profile/${profileId}`);
 
-                if (platformsToScrape.includes("twitter")) {
-                    runTwitterScraper();
-                } else if (platformsToScrape.includes("instagram")) {
-                    runInstagramScraper();
-                } else {
-                    runNlpAndFinish();
-                }
-            });
-        }
-
-        function runTwitterScraper() {
-            if (isCompleted) return;
-
-            console.log(`[SCRAPE] Running Twitter scraper for ${username}...`);
-            const command = `python3 ./python/scrapers/twitter_scraper.py "${username}"`;
-
-            exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function (err, stdout) {
-                if (isCompleted) return;
-
-                if (err) {
-                    console.log("Twitter scraper failed:", err.message);
-                } else {
-                    try {
-                        if (stdout && stdout.trim()) {
-                            const twitterData = JSON.parse(stdout);
-                            profile.twitterData = twitterData;
-                            await profile.save();
-                        }
-                    } catch (e) {
-                        console.log("Failed to parse Twitter JSON:", stdout);
-                    }
-                }
-
-                if (platformsToScrape.includes("instagram")) {
-                    runInstagramScraper();
-                } else {
-                    runNlpAndFinish();
-                }
-            });
-        }
-
-        function runInstagramScraper() {
-            if (isCompleted) return;
-
-            console.log(`[SCRAPE] Running Instagram scraper for ${username}...`);
-            const command = `python3 ./python/scrapers/instagram_scraper.py "${username}"`;
-
-            exec(command, { timeout: 90000, killSignal: 'SIGKILL' }, async function (err, stdout) {
-                if (isCompleted) return;
-
-                if (err) {
-                    console.log("Instagram scraper failed:", err.message);
-                } else {
-                    try {
-                        if (stdout && stdout.trim()) {
-                            const instagramData = JSON.parse(stdout);
-                            profile.instagramData = instagramData;
-                            await profile.save();
-                        }
-                    } catch (e) {
-                        console.log("Failed to parse Instagram JSON:", stdout);
-                    }
-                }
-
-                runNlpAndFinish();
-            });
-        }
-
-        async function runNlpAndFinish() {
-            if (isCompleted) return;
-
-            try {
-                const updatedProfile = await reconProfile.findById(profileId);
-                if (!updatedProfile) {
-                    return safeRespond(function () {
-                        res.status(404).send("Profile not found during final step");
-                    });
-                }
-
-                let allBiosText = [
-                    updatedProfile.gitHubData?.bio_text,
-                    updatedProfile.twitterData?.bio_text,
-                    updatedProfile.instagramData?.bio_text
-                ].filter(Boolean).join(" ");
-
-                if (allBiosText) {
-                    console.log('[NLP] Running entity extraction...');
-                    const safeBioText = `"${allBiosText.replace(/"/g, '\\"')}"`;
-                    const command = `python3 ./python/ai/bio_entity_extractor.py ${safeBioText}`;
-
-                    exec(command, { timeout: 30000, killSignal: 'SIGKILL' }, async function (err, stdout) {
-                        if (isCompleted) return;
-
-                        if (err) {
-                            console.log("NLP script failed:", err.message);
-                        } else {
-                            try {
-                                if (stdout && stdout.trim()) {
-                                    const extractedEntities = JSON.parse(stdout);
-                                    if (extractedEntities && typeof extractedEntities === 'object' &&
-                                        ['PERSON', 'ORG', 'GPE', 'LOC'].every(key => Array.isArray(extractedEntities[key]))) {
-                                        updatedProfile.extractedEntities = extractedEntities;
-                                    } else {
-                                        console.log("Invalid NLP JSON structure:", stdout);
-                                    }
-                                }
-                            } catch (e) {
-                                console.log("Failed to parse NLP JSON:", stdout);
-                            }
-                        }
-
-                        try {
-                            // Calculate risk score using the new function
-                            const riskScoreResult = calculateRiskScore(updatedProfile);
-                            updatedProfile.riskScore = {
-                                score: riskScoreResult.score,
-                                label: riskScoreResult.label,
-                                breakdown: riskScoreResult.breakdown // Store breakdown for display
-                            };
-                            console.log(`Risk score for ${username}: ${riskScoreResult.score} (${riskScoreResult.label}), Breakdown: ${JSON.stringify(riskScoreResult.breakdown, null, 2)}`);
-
-                            updatedProfile.status = 'scraping_complete';
-                            await updatedProfile.save();
-                            console.log(`[SUCCESS] Full scrape complete. Redirecting to final profile...`);
-                            safeRespond(function () {
-                                res.redirect(`/profile/${profileId}`);
-                            });
-                        } catch (saveErr) {
-                            console.log("Failed to save final profile:", saveErr);
-                            safeRespond(function () {
-                                res.status(500).send("Failed to save final results");
-                            });
-                        }
-                    });
-                } else {
-                    try {
-                        // Calculate risk score even if no bios are found
-                        const riskScoreResult = calculateRiskScore(updatedProfile);
-                        updatedProfile.riskScore = {
-                            score: riskScoreResult.score,
-                            label: riskScoreResult.label,
-                            breakdown: riskScoreResult.breakdown // Store breakdown for display
-                        };
-                        console.log(`Risk score for ${username}: ${riskScoreResult.score} (${riskScoreResult.label}), Breakdown: ${JSON.stringify(riskScoreResult.breakdown, null, 2)}`);
-
-                        updatedProfile.status = 'scraping_complete';
-                        await updatedProfile.save();
-                        console.log(`[SUCCESS] Scrape complete (no bios found). Redirecting to final profile...`);
-                        safeRespond(function () {
-                            res.redirect(`/profile/${profileId}`);
-                        });
-                    } catch (saveErr) {
-                        console.log("Failed to save final profile:", saveErr);
-                        safeRespond(function () {
-                            res.status(500).send("Failed to save final results");
-                        });
-                    }
-                }
-            } catch (nlpErr) {
-                console.log("NLP processing failed:", nlpErr);
-                safeRespond(function () {
-                    res.status(500).send("Final processing failed");
-                });
-            }
-        }
-
-        if (platformsToScrape.includes("github")) {
-            runGitHubScraper();
-        } else if (platformsToScrape.includes("twitter")) {
-            runTwitterScraper();
-        } else if (platformsToScrape.includes("instagram")) {
-            runInstagramScraper();
-        } else {
-            runNlpAndFinish();
-        }
     } catch (err) {
         console.log("Targeted scrape failed:", err);
-        clearTimeout(responseTimeout);
         if (!res.headersSent) {
             return res.status(500).send("Scraping failed. Please try again.");
         }
     }
 };
-
 exports.getProfile = async function (req, res) {
     try {
         const profileId = req.params.id;

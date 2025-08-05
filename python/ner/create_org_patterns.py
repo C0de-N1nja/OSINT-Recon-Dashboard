@@ -2,8 +2,9 @@ import json
 import os
 import re
 
-INPUT_FILE = "raw_organizations.txt"
-OUTPUT_FILE = "python/pakistani_names.jsonl"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+INPUT_FILE = os.path.join(SCRIPT_DIR, '..', 'data', 'raw_organizations.txt')
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, '..', 'data', 'pakistani_names.jsonl')
 
 def create_org_patterns():
     if not os.path.exists(INPUT_FILE):
