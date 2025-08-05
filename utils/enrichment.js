@@ -7,31 +7,52 @@ const universitiesData = JSON.parse(fs.readFileSync(universityDataPath, 'utf8'))
 function enrichProfileEntities(profile) {
     const enrichedData = {
         ORG: [],
+        GPE: [],
+        LOC: [],
+        PERSON: []
     };
 
-    if (profile.extractedEntities && profile.extractedEntities.ORG) {
-        profile.extractedEntities.ORG.forEach(orgName => {
-            const foundUni = universitiesData.find(uni =>
-                uni.name.toLowerCase().includes(orgName.toLowerCase()) ||
-                orgName.toLowerCase().includes(uni.name.toLowerCase())
-            );
+    const extracted = profile.extractedEntities || {};
+    
+    const potentialOrgKeywords = ['corp', 'ltd', 'inc', 'university', 'solutions', 'foundation', 'group'];
 
-            if (foundUni) {
-                const infoString = `${foundUni.sector} University in ${foundUni.city}`;
-                enrichedData.ORG.push({
-                    text: orgName,
-                    info: infoString,
-                    isEnriched: true
-                });
-            } else {
-                enrichedData.ORG.push({
-                    text: orgName,
-                    info: null,
-                    isEnriched: false
-                });
+    const orgs = new Set(extracted.ORG || []);
+    
+    (extracted.LOC || []).forEach(loc => {
+        if (potentialOrgKeywords.some(keyword => loc.toLowerCase().includes(keyword))) {
+            orgs.add(loc); 
+        } else {
+            if (!enrichedData.LOC.find(e => e.text.toLowerCase() === loc.toLowerCase())) {
+                 enrichedData.LOC.push({ text: loc, info: null, isEnriched: false });
             }
-        });
-    }
+        }
+    });
+
+    orgs.forEach(orgName => {
+        const foundUni = universitiesData.find(uni => 
+            uni.name.toLowerCase().includes(orgName.toLowerCase()) || 
+            orgName.toLowerCase().includes(uni.name.toLowerCase())
+        );
+
+        if (foundUni) {
+            enrichedData.ORG.push({ text: orgName, info: `${foundUni.sector} University in ${foundUni.city}`, isEnriched: true });
+        } else {
+            enrichedData.ORG.push({ text: orgName, info: null, isEnriched: false });
+        }
+    });
+
+    (extracted.GPE || []).forEach(gpe => {
+         if (!enrichedData.GPE.find(e => e.text.toLowerCase() === gpe.toLowerCase())) {
+            enrichedData.GPE.push({ text: gpe, info: null, isEnriched: false });
+         }
+    });
+    
+    (extracted.PERSON || []).forEach(person => {
+        if (!enrichedData.PERSON.find(e => e.text.toLowerCase() === person.toLowerCase())) {
+           enrichedData.PERSON.push({ text: person, info: null, isEnriched: false });
+        }
+    });
+
     return enrichedData;
 }
 

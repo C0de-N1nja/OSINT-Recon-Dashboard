@@ -68,6 +68,10 @@ const ReconProfileSchema = new mongoose.Schema({
 		type: [String],
 		default: []
 	},
+	googleDorks: {
+        type: Object,
+        default: {}
+    }
 });
 
 module.exports = mongoose.model("ReconProfile", ReconProfileSchema);

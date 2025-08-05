@@ -145,6 +145,18 @@ exports.runTargetedScrape = async function (req, res) {
         profile.enrichedEntities = enrichedEntities;
         console.log('[ENRICH] Enrichment complete. Found context for ' + (enrichedEntities.ORG?.filter(o => o.info).length || 0) + ' organizations.');
 
+        console.log('[DORK] Generating Google Dorks...');
+        const dorkInput = {
+            primaryUsername: profile.primaryUsername,
+            extractedEntities: profile.extractedEntities
+        };
+        const dorkCommand = `${pythonCmd} ./python/utils/google_dork_generator.py '${JSON.stringify(dorkInput)}'`;
+        
+        const dorkResult = await executeScript(dorkCommand);
+        if (dorkResult && !dorkResult.error) {
+            profile.googleDorks = dorkResult;
+        }
+
         const riskScoreResult = calculateRiskScore(profile);
         profile.riskScore = {
             score: riskScoreResult.score,

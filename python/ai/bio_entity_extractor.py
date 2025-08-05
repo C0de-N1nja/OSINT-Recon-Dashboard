@@ -7,9 +7,11 @@ import re
 import unicodedata
 
 def log(message):
+    """Prints a message to the standard error stream for debugging."""
     print(message, file=sys.stderr)
 
 def load_font_mappings(file_path):
+    """Loads a map to convert non-standard font characters to standard ASCII."""
     font_map = {}
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -26,6 +28,7 @@ def load_font_mappings(file_path):
     return font_map
 
 def clean_and_normalize_text(text, font_map):
+    """Cleans and normalizes input text, converting special fonts."""
     normalized_text = []
     for char in text:
         if char in font_map:
@@ -39,63 +42,65 @@ def clean_and_normalize_text(text, font_map):
     cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
     return cleaned_text
 
-nlp = spacy.load("xx_ent_wiki_sm")
-ruler = nlp.add_pipe("entity_ruler", before="ner", config={"overwrite_ents": True})
-
-patterns = []
-script_dir = os.path.dirname(os.path.abspath(__file__))
-patterns_path = os.path.join(script_dir, "../data/pakistani_names.jsonl")
-
 try:
-    with open(patterns_path, "r", encoding="utf-8") as r_file:
-        for line in r_file:
-            patterns.append(json.loads(line))
-    log(f"Loaded {len(patterns)} patterns from {patterns_path}")
-except FileNotFoundError:
-    log(f"Patterns file not found: {patterns_path}")
+    nlp = spacy.load("xx_ent_wiki_sm")
+    ruler = nlp.add_pipe("entity_ruler", before="ner", config={"overwrite_ents": True})
 
-ruler.add_patterns(patterns)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    patterns_path = os.path.join(script_dir, "../data/pakistani_names.jsonl")
+    patterns = []
+    try:
+        with open(patterns_path, "r", encoding="utf-8") as r_file:
+            for line in r_file:
+                patterns.append(json.loads(line))
+        log(f"Loaded {len(patterns)} patterns from {patterns_path}")
+    except FileNotFoundError:
+        log(f"Patterns file not found: {patterns_path}")
+    
+    ruler.add_patterns(patterns)
+    
+    font_map_path = os.path.join(script_dir, "../data/font_mappings.txt")
+    font_mappings = load_font_mappings(font_map_path)
 
-font_map_path = os.path.join(script_dir, "../data/font_mappings.txt")
-font_mappings = load_font_mappings(font_map_path)
+    input_text = sys.argv[1]
+    cleaned_input_text = clean_and_normalize_text(input_text, font_mappings)
+    log(f"Input text: {input_text}")
+    log(f"Normalized text: {cleaned_input_text}")
 
-input_text = sys.argv[1]
-cleaned_input_text = clean_and_normalize_text(input_text, font_mappings)
-log(f"Input text: {input_text}")
-log(f"Normalized text: {cleaned_input_text}")
+    doc = nlp(cleaned_input_text)
+    
+    log(f"Raw entities found by SpaCy: {[(ent.text, ent.label_) for ent in doc.ents]}")
 
-doc = nlp(cleaned_input_text)
-log(f"Raw entities: {[(ent.text, ent.label_) for ent in doc.ents]}")
+    label_map = {
+        "PER": "PERSON",
+        "PERSON": "PERSON",
+        "ORG": "ORG",
+        "GPE": "GPE",
+        "LOC": "LOC"
+    }
+    
+    entities_by_label = {
+        "PERSON": [],
+        "ORG": [],
+        "GPE": [],
+        "LOC": [],
+    }
 
-entities_by_label = {
-    "PERSON": [],
-    "ORG": [],
-    "GPE": [],
-    "LOC": [],
-}
+    for ent in doc.ents:
+        mapped_label = label_map.get(ent.label_)
+        if mapped_label:
+            entities_by_label[mapped_label].append(ent.text)
 
-i = 0
-while i < len(doc.ents):
-    current_entity = doc.ents[i]
-    if current_entity.label_ not in entities_by_label:
-        log(f"Skipping entity '{current_entity.text}' with label '{current_entity.label_}'")
-        i += 1
-        continue
-    if i + 1 < len(doc.ents):
-        next_entity = doc.ents[i + 1]
-        if current_entity.label_ == "PERSON" and next_entity.label_ == "PERSON" and \
-           (next_entity.start == current_entity.end or next_entity.start == current_entity.end + 1):
-            merged_text = current_entity.text + " " + next_entity.text
-            entities_by_label["PERSON"].append(merged_text)
-            i += 2
-        else:
-            entities_by_label[current_entity.label_].append(current_entity.text)
-            i += 1
-    else:
-        entities_by_label[current_entity.label_].append(current_entity.text)
-        i += 1
+    for label, entities in entities_by_label.items():
+        unique_entities = set(entity.title() for entity in entities)
+        entities_by_label[label] = sorted(list(unique_entities))
 
-for label in entities_by_label:
-    entities_by_label[label] = [entity.title() for entity in entities_by_label[label]]
+    print(json.dumps(entities_by_label, ensure_ascii=False))
 
-print(json.dumps(entities_by_label, ensure_ascii=False))
+except Exception as e:
+    error_output = {
+        "error": "Python NLP script failed.",
+        "message": str(e)
+    }
+    log(f"[CRITICAL] NLP Script failed with exception: {e}")
+    print(json.dumps(error_output))
