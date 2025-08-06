@@ -64,18 +64,26 @@
 </div>
 
     <!-- Action Buttons Card -->
-    <div class="card">
-        <h3>Actions</h3>
-        <div class="action-buttons">
-            <a href="/profile/<%= profile._id %>/export/json" class="button-link"><i
-                    class="fa-solid fa-file-arrow-down"></i> Export as JSON</a>
-            <button disabled><i class="fa-solid fa-file-pdf"></i> Export as PDF (Coming Soon)</button>
-            <a href="/profile/intermediate/<%= profile._id %>" class="button-link"><i
-                    class="fa-solid fa-magnifying-glass-plus"></i> Scrape More</a>
-            <a href="/" class="button-link"><i class="fa-solid fa-house"></i> New Search</a>
-        </div>
+<div class="card">
+    <h3>Actions</h3>
+    <div class="action-buttons">
+        <a href="/profile/<%= profile._id %>/export/json" class="button-link">
+            <i class="fa-solid fa-file-arrow-down"></i> Export as JSON
+        </a>
+        
+        <a href="/profile/<%= profile._id %>/export/pdf" class="button-link" target="_blank">
+            <i class="fa-solid fa-file-pdf"></i> Export as PDF
+        </a>
+        
+        <a href="/profile/intermediate/<%= profile._id %>" class="button-link">
+            <i class="fa-solid fa-magnifying-glass-plus"></i> Scrape More
+        </a>
+        
+        <a href="/" class="button-link">
+            <i class="fa-solid fa-house"></i> New Search
+        </a>
     </div>
-
+</div>
     <!-- Initial Scan Results Card -->
     <div class="card">
         <h3><i class="fa-solid fa-user-check"></i> Initial Scan: Found Profiles</h3>

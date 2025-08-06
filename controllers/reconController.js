@@ -2,6 +2,7 @@ const { exec, spawn } = require("child_process");
 const reconProfile = require("../models/ReconProfile");
 const path = require('path');
 const { calculateRiskScore, enrichProfileEntities, generateGraphData } = require("../utils/enrichment");
+const puppeteer = require('puppeteer');
 
 function executeScript(command) {
     return new Promise((resolve, reject) => {
@@ -332,5 +333,59 @@ exports.analyzeDomain = async function (req, res) {
     } catch (err) {
         console.error("Domain analysis controller error:", err);
         res.status(500).json({ status: 'error', message: "Server error during domain analysis." });
+    }
+};
+
+exports.exportProfileAsPdf = async function (req, res) {
+    let browser;
+    try {
+        console.log('[PDF] Starting PDF generation...');
+        const profile = await reconProfile.findById(req.params.id).lean();
+
+        if (!profile) {
+            return res.status(404).send('Profile not found');
+        }
+
+        browser = await puppeteer.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        
+        const url = `http://localhost:3000/profile/${req.params.id}?print=true`;
+        
+        await page.goto(url, { waitUntil: 'networkidle0' });
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20px',
+                right: '20px',
+                bottom: '20px',
+                left: '20px'
+            }
+        });
+
+        console.log('[PDF] PDF buffer created successfully.');
+
+        const filename = `${profile.primaryUsername}_osint_report.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.send(pdfBuffer);
+
+    } catch (err) {
+        console.log('[ERROR] PDF Export failed:', err);
+        if (!res.headersSent) {
+            res.status(500).send('Server error during PDF export.');
+        }
+    } finally {
+        if (browser) {
+            await browser.close();
+            console.log('[PDF] Headless browser closed.');
+        }
     }
 };

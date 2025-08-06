@@ -9,6 +9,7 @@ router.get("/profile/intermediate/:id", reconController.renderIntermediateProfil
 
 // GET Route for exporting data
 router.get("/profile/:id/export/json", reconController.exportProfileAsJson);
+router.get("/profile/:id/export/pdf", reconController.exportProfileAsPdf);
 
 // POST Routes for processing actions
 router.post("/recon/start", reconController.startInitialScan)

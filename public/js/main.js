@@ -197,6 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const graphDataString = graphContainer.dataset.graphData;
             const graphData = JSON.parse(graphDataString);
 
+            // Check if we are in "print mode" for the PDF export
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPrintMode = urlParams.get('print') === 'true';
+
             // Define the visual options for the graph
             const options = {
                 nodes: {
@@ -223,6 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 },
                 physics: {
+                    // If in print mode, disable physics. Otherwise, enable them.
+                    enabled: !isPrintMode, 
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
                         gravitationalConstant: -50,
@@ -244,8 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // Create the graph
+            // Create the graph instance
             const network = new vis.Network(graphContainer, graphData, options);
+
+            // If we are in interactive mode, stabilize the graph after a few seconds for better UX
+            if (!isPrintMode) {
+                setTimeout(() => {
+                    network.setOptions({ physics: false });
+                }, 3000);
+            }
 
         } catch (error) {
             console.error('Failed to parse or render graph data:', error);
