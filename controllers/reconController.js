@@ -214,3 +214,38 @@ exports.exportProfileAsJson = async function (req, res) {
         }
     }
 };
+
+exports.analyzeImage = async function (req, res) {
+    const { profileId, imageUrl } = req.body;
+
+    if (!profileId || !imageUrl) {
+        return res.status(400).json({ error: "Profile ID and Image URL are required." });
+    }
+
+    try {
+        const pythonCmd = process.env.PYTHON_COMMAND || 'python3';
+        const command = `${pythonCmd} ./python/utils/image_metadata_analyzer.py "${imageUrl}"`;
+
+        const result = await executeScript(command);
+        
+        if (result.error || result.status === 'error') {
+             return res.status(500).json({ status: 'error', message: result.message || "Failed to analyze image." });
+        }
+
+        const analysisRecord = {
+            url: imageUrl,
+            data: result,
+            analyzedAt: new Date()
+        };
+
+        await reconProfile.findByIdAndUpdate(profileId, {
+            $push: { imageMetadata: analysisRecord }
+        });
+
+        res.status(200).json(analysisRecord);
+
+    } catch (err) {
+        console.error("Image analysis controller error:", err);
+        res.status(500).json({ status: 'error', message: "Server error during image analysis." });
+    }
+};

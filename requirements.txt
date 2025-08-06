@@ -17,3 +17,6 @@ colorama==0.4.6
 
 # === Optional (for JSON/YAML/config parsing if used later) ===
 pyyaml==6.0.1
+
+# === Image Processing ===
+Pillow==11.3.0

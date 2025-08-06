@@ -73,6 +73,7 @@ class ProfileScraper:
             'following_count': "",
             'followers_count': "",
             'verified_badge': False,
+            'profile_pic_url': "",
             'error': None
         }
         
@@ -113,7 +114,19 @@ class ProfileScraper:
                         break
             except Exception as e:
                 pass
-
+            
+            try:
+                avatar_container = wait.until(EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "div[data-testid*='UserAvatar']")
+                ))
+                img_element = avatar_container.find_element(By.TAG_NAME, "img")
+                
+                pic_url = img_element.get_attribute("src")
+                clean_pic_url = re.sub(r'_\w+\.(jpg|png|webp)$', '.\\1', pic_url)
+                twitter_data['profile_pic_url'] = clean_pic_url
+            except Exception as e:
+                pass
+ 
             try:
                 bio_element = wait.until(EC.presence_of_element_located(
                     (By.CSS_SELECTOR, "div[data-testid='UserDescription']")

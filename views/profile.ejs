@@ -87,159 +87,107 @@
     </div>
 
     <!-- GitHub Card -->
-<% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('github')) { %>
+<% if (profile.scrapesAttempted.includes('github')) { %>
     <div class="card">
         <h3><i class="fa-brands fa-github"></i> GitHub Profile Details</h3>
-        <% if (profile.gitHubData && (profile.gitHubData.bio_text || profile.gitHubData.org || 
-            profile.gitHubData.location || profile.gitHubData.website || 
-            profile.gitHubData.followers_count || profile.gitHubData.following_count || 
-            (profile.gitHubData.social_media && Object.values(profile.gitHubData.social_media).some(url => url)))) { %>
-            <p><strong>URL:</strong> <a href="https://github.com/<%= profile.primaryUsername %>"
-                    target="_blank">https://github.com/<%= profile.primaryUsername %></a></p>
-            <p><strong>Bio:</strong>
-                <%= profile.gitHubData.bio_text || 'N/A' %>
-            </p>
-            <p><strong>Organization:</strong>
-                <%= profile.gitHubData.org || 'N/A' %>
-            </p>
-            <p><strong>Location:</strong>
-                <%= profile.gitHubData.location || 'N/A' %>
-            </p>
-            <p><strong>Website:</strong>
-                <%= profile.gitHubData.website || 'N/A' %>
-            </p>
-            <p><strong>Followers:</strong>
-                <%= profile.gitHubData.followers_count || 'N/A' %>
-            </p>
-            <p><strong>Following:</strong>
-                <%= profile.gitHubData.following_count || 'N/A' %>
-            </p>
-            <% if (profile.gitHubData.social_media && Object.keys(profile.gitHubData.social_media).length > 0) { %>
-                <p><strong>Social Media Links (from GitHub):</strong></p>
+        <% if (profile.gitHubData && !profile.gitHubData.error && (profile.gitHubData.bio_text || profile.gitHubData.org || profile.gitHubData.location || profile.gitHubData.website || profile.gitHubData.followers_count)) { %>
+            
+            <% if (profile.gitHubData.profile_pic_url) { %>
+                <div class="profile-picture-container">
+                    <img src="<%= profile.gitHubData.profile_pic_url %>" alt="GitHub Profile Picture" class="profile-picture">
+                    <button class="analyze-image-btn" 
+                            data-image-url="<%= profile.gitHubData.profile_pic_url %>"
+                            data-profile-id="<%= profile._id %>">
+                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
+                    </button>
+                </div>
+            <% } %>
+
+            <p><strong>URL:</strong> <a href="https://github.com/<%= profile.primaryUsername %>" target="_blank">https://github.com/<%= profile.primaryUsername %></a></p>
+            <p><strong>Bio:</strong><pre><%= profile.gitHubData.bio_text || 'N/A' %></pre></p>
+            <p><strong>Organization:</strong> <%= profile.gitHubData.org || 'N/A' %></p>
+            <p><strong>Location:</strong> <%= profile.gitHubData.location || 'N/A' %></p>
+            <p><strong>Website:</strong> <%- profile.gitHubData.website ? `<a href="${profile.gitHubData.website}" target="_blank">${profile.gitHubData.website}</a>` : 'N/A' %></p>
+            <p><strong>Followers:</strong> <%= profile.gitHubData.followers_count || 'N/A' %></p>
+            <p><strong>Following:</strong> <%= profile.gitHubData.following_count || 'N/A' %></p>
+        <% } else { %>
+            <p class="no-results">Scrape was run, but no detailed public information was found for GitHub.</p>
+        <% } %>
+    </div>
+<% } %>
+
+<!-- Twitter Card -->
+<% if (profile.scrapesAttempted.includes('twitter')) { %>
+    <div class="card">
+        <h3><i class="fa-brands fa-twitter"></i> Twitter (X) Profile Details</h3>
+        <% if (profile.twitterData && !profile.twitterData.error && profile.twitterData.display_name) { %>
+
+            <% if (profile.twitterData.profile_pic_url) { %>
+                <div class="profile-picture-container">
+                    <img src="<%= profile.twitterData.profile_pic_url %>" alt="Twitter Profile Picture" class="profile-picture">
+                    <button class="analyze-image-btn" 
+                            data-image-url="<%= profile.twitterData.profile_pic_url %>"
+                            data-profile-id="<%= profile._id %>">
+                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
+                    </button>
+                </div>
+            <% } %>
+
+            <p><strong>Display Name:</strong> <%= profile.twitterData.display_name %></p>
+            <p><strong>Username:</strong> <%= profile.twitterData.username_handle %></p>
+            <p><strong>Bio:</strong><pre><%= profile.twitterData.bio_text || 'N/A' %></pre></p>
+            <p><strong>Location:</strong> <%= profile.twitterData.location || 'N/A' %></p>
+            <p><strong>Website:</strong> <%- profile.twitterData.website ? `<a href="${profile.twitterData.website}" target="_blank">${profile.twitterData.website}</a>` : 'N/A' %></p>
+            <p><strong>Followers:</strong> <%= profile.twitterData.followers_count || 'N/A' %></p>
+            <p><strong>Following:</strong> <%= profile.twitterData.following_count || 'N/A' %></p>
+            <p><strong>Join Date:</strong> <%= profile.twitterData.join_date || 'N/A' %></p>
+            <p><strong>Verified:</strong> <%= profile.twitterData.verified_badge ? 'Yes' : 'No' %></p>
+        <% } else { %>
+            <p class="no-results">Scrape was run, but no detailed public information was found for Twitter.</p>
+        <% } %>
+    </div>
+<% } %>
+
+<!-- Instagram Card -->
+<% if (profile.scrapesAttempted.includes('instagram')) { %>
+    <div class="card">
+        <h3><i class="fa-brands fa-instagram"></i> Instagram Profile Details</h3>
+        <% if (profile.instagramData && !profile.instagramData.error && profile.instagramData.username) { %>
+
+            <% if (profile.instagramData.profile_pic_url) { %>
+                <div class="profile-picture-container">
+                    <img src="<%= profile.instagramData.profile_pic_url %>" alt="Instagram Profile Picture" class="profile-picture">
+                    <button class="analyze-image-btn" 
+                            data-image-url="<%= profile.instagramData.profile_pic_url %>"
+                            data-profile-id="<%= profile._id %>">
+                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
+                    </button>
+                </div>
+            <% } %>
+
+            <p><strong>Display Name:</strong> <%= profile.instagramData.display_name || 'N/A' %></p>
+            <p><strong>Username:</strong> <%= profile.instagramData.username %></p>
+            <p><strong>Bio:</strong><pre><%= profile.instagramData.bio_text || 'N/A' %></pre></p>
+            <p><strong>Posts:</strong> <%= profile.instagramData.posts_count || 'N/A' %></p>
+            <p><strong>Followers:</strong> <%= profile.instagramData.followers_count || 'N/A' %></p>
+            <p><strong>Following:</strong> <%= profile.instagramData.following_count || 'N/A' %></p>
+            <p><strong>Private:</strong> <%= profile.instagramData.is_private ? 'Yes' : 'No' %></p>
+            <p><strong>Verified:</strong> <%= profile.instagramData.is_verified ? 'Yes' : 'No' %></p>
+            <% if (profile.instagramData.social_media && Object.values(profile.instagramData.social_media).some(url => url)) { %>
+                <p><strong>Social Media Links (from Instagram):</strong></p>
                 <ul class="platform-list">
-                    <% for (const [platform, url] of Object.entries(profile.gitHubData.social_media)) { %>
+                    <% for (const [platform, url] of Object.entries(profile.instagramData.social_media)) { %>
                         <% if (url) { %>
-                            <li>
-                                <strong>
-                                    <%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:
-                                </strong>
-                                <a href="<%= url %>" target="_blank">
-                                    <%= url %>
-                                </a>
-                            </li>
+                            <li><strong><%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:</strong> <a href="<%= url %>" target="_blank"><%= url %></a></li>
                         <% } %>
                     <% } %>
                 </ul>
             <% } %>
         <% } else { %>
-            <p class="no-results">Scrape was run, but no detailed profile information was found for GitHub.</p>
+            <p class="no-results">Scrape was run, but no detailed public information was found for Instagram.</p>
         <% } %>
     </div>
 <% } %>
-            <!-- Twitter Card -->
-            <% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('twitter')) { %>
-                <div class="card">
-                    <h3><i class="fa-brands fa-twitter"></i> Twitter (X) Profile Details</h3>
-                    <% if (profile.twitterData && profile.twitterData.display_name && !profile.twitterData.error) { %>
-                        <p><strong>Display Name:</strong>
-                            <%= profile.twitterData.display_name || 'N/A' %>
-                        </p>
-                        <p><strong>Username:</strong>
-                            <%= profile.twitterData.username_handle || 'N/A' %>
-                        </p>
-                        <p><strong>Bio:</strong>
-                            <%= profile.twitterData.bio_text || 'N/A' %>
-                        </p>
-                        <p><strong>Location:</strong>
-                            <%= profile.twitterData.location || 'N/A' %>
-                        </p>
-                        <p><strong>Website:</strong> <a href="<%= profile.twitterData.website %>" target="_blank">
-                                <%= profile.twitterData.website || 'N/A' %>
-                            </a></p>
-                        <p><strong>Followers:</strong>
-                            <%= profile.twitterData.followers_count || 'N/A' %>
-                        </p>
-                        <p><strong>Following:</strong>
-                            <%= profile.twitterData.following_count || 'N/A' %>
-                        </p>
-                        <p><strong>Join Date:</strong>
-                            <%= profile.twitterData.join_date || 'N/A' %>
-                        </p>
-                        <p><strong>Verified:</strong>
-                            <%= profile.twitterData.verified_badge ? 'Yes' : 'No' %>
-                        </p>
-                        <% } else { %>
-                            <p class="no-results">Scrape was run, but no detailed profile information was found for
-                                Twitter.</p>
-                            <% if (profile.twitterData && profile.twitterData.error) { %>
-                                <p><strong>Error:</strong>
-                                    <%= profile.twitterData.error %>
-                                </p>
-                                <% } %>
-                                    <% } %>
-                </div>
-                <% } %>
-
-                    <!-- Instagram Card -->
-                    <% if (profile.scrapesAttempted && profile.scrapesAttempted.includes('instagram')) { %>
-                        <div class="card">
-                            <h3><i class="fa-brands fa-instagram"></i> Instagram Profile Details</h3>
-                            <% if (profile.instagramData && profile.instagramData.username &&
-                                !profile.instagramData.error) { %>
-                                <p><strong>Display Name:</strong>
-                                    <%= profile.instagramData.display_name || 'N/A' %>
-                                </p>
-                                <p><strong>Username:</strong>
-                                    <%= profile.instagramData.username || 'N/A' %>
-                                </p>
-                                <p><strong>Bio:</strong>
-                                <pre><%= profile.instagramData.bio_text || 'N/A' %></pre>
-                                </p>
-                                <p><strong>Posts:</strong>
-                                    <%= profile.instagramData.posts_count || 'N/A' %>
-                                </p>
-                                <p><strong>Followers:</strong>
-                                    <%= profile.instagramData.followers_count || 'N/A' %>
-                                </p>
-                                <p><strong>Following:</strong>
-                                    <%= profile.instagramData.following_count || 'N/A' %>
-                                </p>
-                                <p><strong>Private:</strong>
-                                    <%= profile.instagramData.is_private ? 'Yes' : 'No' %>
-                                </p>
-                                <p><strong>Verified:</strong>
-                                    <%= profile.instagramData.is_verified ? 'Yes' : 'No' %>
-                                </p>
-                                <% if (profile.instagramData.social_media &&
-                                    Object.keys(profile.instagramData.social_media).length> 0) { %>
-                                    <p><strong>Social Media Links (from Instagram):</strong></p>
-                                    <ul class="platform-list">
-                                        <% for (const [platform, url] of
-                                            Object.entries(profile.instagramData.social_media)) { %>
-                                            <% if (url) { %>
-                                                <li>
-                                                    <strong>
-                                                        <%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:
-                                                    </strong>
-                                                    <a href="<%= url %>" target="_blank">
-                                                        <%= url %>
-                                                    </a>
-                                                </li>
-                                                <% } %>
-                                                    <% } %>
-                                    </ul>
-                                    <% } %>
-                                        <% } else { %>
-                                            <p class="no-results">Scrape was run, but no detailed profile information
-                                                was found for Instagram.</p>
-                                            <% if (profile.instagramData && profile.instagramData.error) { %>
-                                                <p><strong>Error:</strong>
-                                                    <%= profile.instagramData.error %>
-                                                </p>
-                                                <% } %>
-                                                    <% } %>
-                        </div>
-                        <% } %>
 
 
 <!-- CONSOLIDATED DORKS & LEADS CARD -->

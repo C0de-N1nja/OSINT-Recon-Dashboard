@@ -19,6 +19,7 @@ const ReconProfileSchema = new mongoose.Schema({
 	},
 	gitHubData: {
 		bio_text: { type: String, default: "" },
+		profile_pic_url: { type: String, default: "" },
 		org: { type: String, default: "" },
 		location: { type: String, default: "" },
 		website: { type: String, default: "" },
@@ -28,6 +29,7 @@ const ReconProfileSchema = new mongoose.Schema({
 	},
 	twitterData: {
 		display_name: { type: String, default: "" },
+		profile_pic_url: { type: String, default: "" },
 		username_handle: { type: String, default: "" },
 		bio_text: { type: String, default: "" },
 		location: { type: String, default: "" },
@@ -69,9 +71,13 @@ const ReconProfileSchema = new mongoose.Schema({
 		default: []
 	},
 	googleDorks: {
-        type: Object,
-        default: {}
-    }
+		type: Object,
+		default: {}
+	},
+	imageMetadata: {
+		type: Array,
+		default: []
+	}
 });
 
 module.exports = mongoose.model("ReconProfile", ReconProfileSchema);

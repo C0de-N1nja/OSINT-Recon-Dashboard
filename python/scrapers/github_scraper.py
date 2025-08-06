@@ -47,9 +47,6 @@ class ProfileScraper:
         ]
 
     def extract_with_fallbacks(self, soup, selectors_list, debug_field=None):
-        """
-        Try multiple selectors until one works
-        """
         for i, selector in enumerate(selectors_list):
             try:
                 element = soup.select_one(selector)
@@ -165,6 +162,15 @@ class ProfileScraper:
             location_text_str = self.extract_with_fallbacks(soup, location_selectors, "LOCATION" if debug else None)
             followers_count_str = self.extract_with_fallbacks(soup, followers_selectors, "FOLLOWERS" if debug else None)
             following_count_str = self.extract_with_fallbacks(soup, following_selectors, "FOLLOWING" if debug else None)
+            
+            profile_pic_url_str = ""
+            try:
+                img_tag = soup.select_one("img.avatar-user")
+                if img_tag and img_tag.has_attr('src'):
+                    profile_pic_url_str = img_tag['src']
+            except Exception as e:
+                if debug:
+                    print(f"[DEBUG] Profile Pic Selector failed: {e}", file=sys.stderr)
 
             website_text_str = ""
             website_element = None
@@ -264,7 +270,8 @@ class ProfileScraper:
             "website": website_text_str,
             "followers_count": followers_count_str,
             "following_count": following_count_str, 
-            "social_media": social_media_dict
+            "social_media": social_media_dict,
+            "profile_pic_url": profile_pic_url_str
         }
 
         return output_data

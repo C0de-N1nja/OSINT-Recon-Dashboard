@@ -13,5 +13,6 @@ router.get("/profile/:id/export/json", reconController.exportProfileAsJson);
 // POST Routes for processing actions
 router.post("/recon/start", reconController.startInitialScan)
 router.post("/recon/scrape", reconController.runTargetedScrape)
+router.post("/recon/analyze-image", reconController.analyzeImage);
 
 module.exports = router
