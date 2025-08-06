@@ -8,6 +8,8 @@ import json
 import sys
 import random
 import os
+import requests 
+import base64
 
 class ProfileScraper:
     def __init__(self):
@@ -148,11 +150,17 @@ class ProfileScraper:
             WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, "//li[contains(., 'follower')]")))
             
             header = driver.find_element(By.TAG_NAME, "header")
-            
+
+            # Getting the profile pic            
             try:
                 img_el = header.find_element(By.TAG_NAME, "img")
-                instagram_data['profile_pic_url'] = img_el.get_attribute('src')
-            except: 
+                temp_url = img_el.get_attribute('src')
+
+                response = requests.get(temp_url, timeout=10)
+                if response.status_code == 200:
+                    b64_string = base64.b64encode(response.content).decode('utf-8')
+                    instagram_data['profile_pic_url'] = f"data:image/jpeg;base64,{b64_string}"
+            except Exception: 
                 pass
 
             try:

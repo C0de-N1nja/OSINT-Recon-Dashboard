@@ -162,15 +162,15 @@ class ProfileScraper:
             location_text_str = self.extract_with_fallbacks(soup, location_selectors, "LOCATION" if debug else None)
             followers_count_str = self.extract_with_fallbacks(soup, followers_selectors, "FOLLOWERS" if debug else None)
             following_count_str = self.extract_with_fallbacks(soup, following_selectors, "FOLLOWING" if debug else None)
-            
+
             profile_pic_url_str = ""
             try:
                 img_tag = soup.select_one("img.avatar-user")
                 if img_tag and img_tag.has_attr('src'):
-                    profile_pic_url_str = img_tag['src']
-            except Exception as e:
-                if debug:
-                    print(f"[DEBUG] Profile Pic Selector failed: {e}", file=sys.stderr)
+                    raw_url = img_tag['src']
+                    profile_pic_url_str = raw_url.split('?')[0]
+            except Exception:
+                pass
 
             website_text_str = ""
             website_element = None
