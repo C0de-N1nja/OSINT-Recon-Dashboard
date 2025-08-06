@@ -1,8 +1,7 @@
 const { exec, spawn } = require("child_process");
 const reconProfile = require("../models/ReconProfile");
 const path = require('path');
-const { calculateRiskScore, enrichProfileEntities } = require("../utils/enrichment");
-
+const { calculateRiskScore, enrichProfileEntities, generateGraphData } = require("../utils/enrichment");
 
 function executeScript(command) {
     return new Promise((resolve, reject) => {
@@ -220,16 +219,24 @@ exports.runTargetedScrape = async function (req, res) {
         }
     }
 };
+
 exports.getProfile = async function (req, res) {
     try {
         const profileId = req.params.id;
-        const foundProfile = await reconProfile.findById(profileId).lean();
+
+        const foundProfile = await reconProfile.findById(profileId);
 
         if (!foundProfile) {
             return res.status(404).send("Profile not found");
         }
 
-        res.render("profile", { profile: foundProfile, pageName: 'profile' });
+        const graphData = generateGraphData(foundProfile);
+        res.render("profile", { 
+            profile: foundProfile.toObject(),
+            graphData: JSON.stringify(graphData), 
+            pageName: 'profile' 
+        });
+
     } catch (err) {
         console.log("[ERROR] Error fetching profile:", err);
         if (!res.headersSent) {

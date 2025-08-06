@@ -76,7 +76,7 @@
 }
 
 .analyze-domain-btn {
-    background-color: #6c757d; /* A neutral grey */
+    background-color: #6c757d;
     font-size: 0.8rem;
     padding: 3px 8px;
     margin-left: 10px;
@@ -85,4 +85,11 @@
 
 .analyze-domain-btn:hover {
     background-color: #5a6268;
+}
+
+#relationship-graph {
+    width: 100%;
+    height: 450px;
+    border: 1px solid #333;
+    background-color: #1a1a1a;
 }

@@ -151,7 +151,62 @@ function calculateRiskScore(profile) {
     };
 }
 
+function generateGraphData(profile) {
+    const nodes = [];
+    const edges = [];
+    const existingNodes = new Set();
+
+    const addNode = (id, label, group, title = label) => {
+        if (!existingNodes.has(id)) {
+            nodes.push({ id, label, group, title });
+            existingNodes.add(id);
+        }
+    };
+
+    const rootId = profile.primaryUsername;
+    addNode(rootId, profile.primaryUsername, 'target');
+
+    if (profile.gitHubData && profile.gitHubData.followers_count) {
+        addNode('github', 'GitHub', 'platform');
+        edges.push({ from: rootId, to: 'github', label: 'HAS_ACCOUNT' });
+    }
+    if (profile.twitterData && profile.twitterData.display_name) {
+        addNode('twitter', 'Twitter', 'platform');
+        edges.push({ from: rootId, to: 'twitter', label: 'HAS_ACCOUNT' });
+    }
+    if (profile.instagramData && profile.instagramData.username) {
+        addNode('instagram', 'Instagram', 'platform');
+        edges.push({ from: rootId, to: 'instagram', label: 'HAS_ACCOUNT' });
+    }
+
+    const connectEntity = (platformId, entity, type) => {
+        if (!entity || !entity.text) return;
+        const entityId = `${type}_${entity.text.toLowerCase().replace(/\s/g, '_')}`;
+        addNode(entityId, entity.text, type.toLowerCase(), entity.info || entity.text);
+        edges.push({ from: platformId, to: entityId, label: 'MENTIONS' });
+    };
+
+    if (profile.enrichedEntities) {
+        const allEntities = Object.values(profile.enrichedEntities).flat();
+                
+        const platformNodes = nodes.filter(n => n.group === 'platform').map(n => n.id);
+
+        (profile.enrichedEntities.PERSON || []).forEach(entity => {
+            platformNodes.forEach(platformId => connectEntity(platformId, entity, 'PERSON'));
+        });
+        (profile.enrichedEntities.ORG || []).forEach(entity => {
+            platformNodes.forEach(platformId => connectEntity(platformId, entity, 'ORG'));
+        });
+        (profile.enrichedEntities.GPE || []).forEach(entity => {
+            platformNodes.forEach(platformId => connectEntity(platformId, entity, 'GPE'));
+        });
+    }
+
+    return { nodes, edges };
+}
+
 module.exports = {
     calculateRiskScore,
-    enrichProfileEntities
+    enrichProfileEntities,
+    generateGraphData
 };

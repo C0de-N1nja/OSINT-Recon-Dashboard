@@ -189,4 +189,68 @@ document.addEventListener('DOMContentLoaded', () => {
     analyzeButtons.forEach(button => {
         button.addEventListener('click', handleImageAnalysis);
     });
+
+    const graphContainer = document.getElementById('relationship-graph');
+    if (graphContainer) {
+        try {
+            // Read and parse the graph data embedded in the HTML
+            const graphDataString = graphContainer.dataset.graphData;
+            const graphData = JSON.parse(graphDataString);
+
+            // Define the visual options for the graph
+            const options = {
+                nodes: {
+                    shape: 'dot',
+                    size: 20,
+                    font: {
+                        size: 14,
+                        color: '#ffffff'
+                    },
+                    borderWidth: 2,
+                },
+                edges: {
+                    width: 1,
+                    color: {
+                        color: '#848484',
+                        highlight: '#00aaff'
+                    },
+                    arrows: {
+                      to: { enabled: true, scaleFactor: 0.5 }
+                    },
+                    font: {
+                        size: 10,
+                        align: 'middle'
+                    }
+                },
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -50,
+                        centralGravity: 0.01,
+                        springLength: 100,
+                        springConstant: 0.08,
+                        avoidOverlap: 0.5
+                    }
+                },
+                groups: {
+                    target: { color: { background: '#ff4c4c', border: '#ff7878' }, size: 30 },
+                    platform: { color: { background: '#00aaff', border: '#59caff' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf0ac', size: 50, color: '#FFFFFF' } },
+                    person: { color: { background: '#f0ad4e', border: '#f5c986' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf007', size: 50, color: '#FFFFFF' } },
+                    org: { color: { background: '#5cb85c', border: '#89d489' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf1ad', size: 50, color: '#FFFFFF' } },
+                    gpe: { color: { background: '#5bc0de', border: '#89d8eb' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf57d', size: 50, color: '#FFFFFF' } }
+                },
+                interaction: {
+                    hover: true
+                }
+            };
+
+            // Create the graph
+            const network = new vis.Network(graphContainer, graphData, options);
+
+        } catch (error) {
+            console.error('Failed to parse or render graph data:', error);
+            graphContainer.innerHTML = '<p style="color: #f8d7da;">Error rendering relationship graph.</p>';
+        }
+    }
+
 });
