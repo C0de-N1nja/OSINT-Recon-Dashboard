@@ -242,14 +242,20 @@
                         <% } %>
 
 
-<!-- Extracted Entities Card -->
+<!-- CONSOLIDATED DORKS & LEADS CARD -->
+<% 
+const dorks = profile.googleDorks;
+const hasUsernameDorks = dorks && dorks.username_dorks && dorks.username_dorks.length > 0;
+const hasEntityDorks = dorks && dorks.entity_dorks && Object.keys(dorks.entity_dorks).length > 0;
+%>
+
 <% if (profile.extractedEntities && Object.values(profile.extractedEntities).some(arr => arr && arr.length > 0)) { %>
     <div class="card">
-        <h3><i class="fa-solid fa-brain"></i> AI Intelligence Analysis (Extracted Entities)</h3>
+        <h3><i class="fa-solid fa-brain"></i> Raw AI Analysis (Extracted Entities)</h3>
         <% for (const [type, list] of Object.entries(profile.extractedEntities)) { %>
             <% if (list && list.length > 0) { %>
                 <p>
-                    <strong><%= type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() %>:</strong>
+                    <strong><%= type %>:</strong>
                     <span class="entity-list"><%= list.join(', ') %></span>
                 </p>
             <% } %>
@@ -257,45 +263,37 @@
     </div>
 <% } %>
 
-<!-- Username Dorks Card -->
-<% if (profile.googleDorks && profile.googleDorks.username_dorks && profile.googleDorks.username_dorks.length > 0) { %>
-    <div class="card">
-        <h3><i class="fa-brands fa-google"></i> General Investigation Dorks</h3>
-        <p>Use these links to perform broad searches for the username across the web.</p>
-        <ul class="platform-list">
-            <% profile.googleDorks.username_dorks.forEach(dork => { %>
-                <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
-            <% }) %>
-        </ul>
-    </div>
-<% } %>
 
-<!-- Enriched & Entity Dorks Card -->
-<% if (profile.enrichedEntities && Object.keys(profile.enrichedEntities).length > 0) { %>
+<% if (hasUsernameDorks || hasEntityDorks) { %>
     <div class="card">
-        <h3><i class="fa-solid fa-sitemap"></i> Entity Analysis & Investigation Leads</h3>
-        <% for (const [type, list] of Object.entries(profile.enrichedEntities)) { %>
-            <% if (list && list.length > 0) { %>
-                <h4><%= type %> Entities</h4>
-                <ul class="platform-list">
-                    <% list.forEach(entity => { %>
+        <h3><i class="fa-brands fa-google"></i> Investigation Leads & Dorks</h3>
+
+        <% if (hasUsernameDorks) { %>
+            <h4>General Dorks (for username: <%= profile.primaryUsername %>)</h4>
+            <ul class="platform-list">
+                <% dorks.username_dorks.forEach(dork => { %>
+                    <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
+                <% }) %>
+            </ul>
+        <% } %>
+
+        <% if (hasEntityDorks) { %>
+            <% if (hasUsernameDorks) { %><hr><% } %>
+            <h4>Entity-Specific Dorks</h4>
+            <ul class="platform-list">
+                <% for (const [entityText, entityDorks] of Object.entries(dorks.entity_dorks)) { %>
+                    <% if (entityDorks && entityDorks.length > 0) { %>
                         <li>
-                            <strong><%= entity.text %></strong>
-                            <% if (entity.isEnriched) { %>
-                                – <span class="entity-info" style="color: #28a745;"><%= entity.info %></span>
-                            <% } else if (profile.googleDorks && profile.googleDorks.entity_dorks && profile.googleDorks.entity_dorks[entity.text]) { %>
-                                <ul style="margin-top: 5px; list-style-type: '↳ ';">
-                                    <% profile.googleDorks.entity_dorks[entity.text].forEach(dork => { %>
-                                        <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
-                                    <% }) %>
-                                </ul>
-                            <% } else { %>
-                                – <span class="entity-info" style="color: #ffc107;">[Unverified]</span>
-                            <% } %>
+                            <strong><%= entityText %></strong>
+                            <ul style="margin-top: 5px; list-style-type: '↳ ';">
+                                <% entityDorks.forEach(dork => { %>
+                                    <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
+                                <% }) %>
+                            </ul>
                         </li>
-                    <% }) %>
-                </ul>
-            <% } %>
+                    <% } %>
+                <% } %>
+            </ul>
         <% } %>
     </div>
 <% } %>

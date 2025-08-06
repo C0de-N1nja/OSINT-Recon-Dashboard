@@ -7,6 +7,7 @@ import time
 import json
 import sys
 import random
+import os
 
 class ProfileScraper:
     def __init__(self):
@@ -121,7 +122,14 @@ class ProfileScraper:
             return True
 
         try:
-            driver = uc.Chrome(options=options)
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            driver_path = os.path.join(script_dir, '..', '..', 'drivers', 'chromedriver')
+            
+            if not os.path.exists(driver_path):
+                return { "error": "ChromeDriver executable not found at " + driver_path, "url": instagram_url }
+            
+            driver = uc.Chrome(options=options, driver_executable_path=driver_path)
+
             driver.get(instagram_url)
             
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "main, header")))
