@@ -107,7 +107,13 @@
             <p><strong>Bio:</strong><pre><%= profile.gitHubData.bio_text || 'N/A' %></pre></p>
             <p><strong>Organization:</strong> <%= profile.gitHubData.org || 'N/A' %></p>
             <p><strong>Location:</strong> <%= profile.gitHubData.location || 'N/A' %></p>
-            <p><strong>Website:</strong> <%- profile.gitHubData.website ? `<a href="${profile.gitHubData.website}" target="_blank">${profile.gitHubData.website}</a>` : 'N/A' %></p>
+            <p><strong>Website:</strong> <%- profile.gitHubData.website ? `<a href="${profile.gitHubData.website}" target="_blank">${profile.gitHubData.website}</a>` : 'N/A' %>
+            <% if (profile.gitHubData.website) { %>
+        <button class="analyze-domain-btn" data-website-url="<%= profile.gitHubData.website %>" data-profile-id="<%= profile._id %>">
+            <i class="fa-solid fa-network-wired"></i> Analyze
+        </button>
+    <% } %>
+            </p>
             <p><strong>Followers:</strong> <%= profile.gitHubData.followers_count || 'N/A' %></p>
             <p><strong>Following:</strong> <%= profile.gitHubData.following_count || 'N/A' %></p>
         <% } else { %>
@@ -137,7 +143,13 @@
             <p><strong>Username:</strong> <%= profile.twitterData.username_handle %></p>
             <p><strong>Bio:</strong><pre><%= profile.twitterData.bio_text || 'N/A' %></pre></p>
             <p><strong>Location:</strong> <%= profile.twitterData.location || 'N/A' %></p>
-            <p><strong>Website:</strong> <%- profile.twitterData.website ? `<a href="${profile.twitterData.website}" target="_blank">${profile.twitterData.website}</a>` : 'N/A' %></p>
+            <p><strong>Website:</strong> <%- profile.twitterData.website ? `<a href="${profile.twitterData.website}" target="_blank">${profile.twitterData.website}</a>` : 'N/A' %>
+            <% if (profile.twitterData.website) { %>
+        <button class="analyze-domain-btn" data-website-url="<%= profile.twitterData.website %>" data-profile-id="<%= profile._id %>">
+            <i class="fa-solid fa-network-wired"></i> Analyze
+        </button>
+    <% } %>
+            </p>
             <p><strong>Followers:</strong> <%= profile.twitterData.followers_count || 'N/A' %></p>
             <p><strong>Following:</strong> <%= profile.twitterData.following_count || 'N/A' %></p>
             <p><strong>Join Date:</strong> <%= profile.twitterData.join_date || 'N/A' %></p>
@@ -169,6 +181,15 @@
             <p><strong>Username:</strong> <%= profile.instagramData.username %></p>
             <p><strong>Bio:</strong><pre><%= profile.instagramData.bio_text || 'N/A' %></pre></p>
             <p><strong>Posts:</strong> <%= profile.instagramData.posts_count || 'N/A' %></p>
+            <% if (profile.instagramData.social_media && profile.instagramData.social_media.website) { %>
+    <p><strong>Website (from bio):</strong> 
+        <a href="<%= profile.instagramData.social_media.website %>" target="_blank"><%= profile.instagramData.social_media.website %></a>
+        
+        <button class="analyze-domain-btn" data-website-url="<%= profile.instagramData.social_media.website %>" data-profile-id="<%= profile._id %>">
+            <i class="fa-solid fa-network-wired"></i> Analyze
+        </button>
+    </p>
+<% } %>
             <p><strong>Followers:</strong> <%= profile.instagramData.followers_count || 'N/A' %></p>
             <p><strong>Following:</strong> <%= profile.instagramData.following_count || 'N/A' %></p>
             <p><strong>Private:</strong> <%= profile.instagramData.is_private ? 'Yes' : 'No' %></p>

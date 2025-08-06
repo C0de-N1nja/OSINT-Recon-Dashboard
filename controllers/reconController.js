@@ -292,3 +292,38 @@ exports.analyzeImage = async function (req, res) {
         res.status(500).json({ status: 'error', message: "Server error during image analysis." });
     }
 };
+
+exports.analyzeDomain = async function (req, res) {
+    const { profileId, websiteUrl } = req.body;
+
+    if (!profileId || !websiteUrl) {
+        return res.status(400).json({ error: "Profile ID and Website URL are required." });
+    }
+
+    try {
+        const pythonCmd = process.env.PYTHON_COMMAND || 'python3';
+        const command = `${pythonCmd} ./python/utils/domain_analyzer.py "${websiteUrl}"`;
+
+        const result = await executeScript(command); // Using our original exec helper
+        
+        if (result.error || result.status === 'error') {
+             return res.status(500).json({ status: 'error', message: result.message || "Failed to analyze domain." });
+        }
+
+        const analysisRecord = {
+            url: websiteUrl,
+            data: result,
+            analyzedAt: new Date()
+        };
+
+        await reconProfile.findByIdAndUpdate(profileId, {
+            $push: { domainIntelligence: analysisRecord }
+        });
+
+        res.status(200).json(analysisRecord);
+
+    } catch (err) {
+        console.error("Domain analysis controller error:", err);
+        res.status(500).json({ status: 'error', message: "Server error during domain analysis." });
+    }
+};

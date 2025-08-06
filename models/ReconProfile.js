@@ -77,7 +77,11 @@ const ReconProfileSchema = new mongoose.Schema({
 	imageMetadata: {
 		type: Array,
 		default: []
-	}
+	},
+	domainIntelligence: {
+        type: Array,
+        default: []
+    }
 });
 
 module.exports = mongoose.model("ReconProfile", ReconProfileSchema);

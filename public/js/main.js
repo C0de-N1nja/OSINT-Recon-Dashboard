@@ -119,7 +119,73 @@ document.addEventListener('DOMContentLoaded', () => {
             modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while communicating with the server. Please try again.</p>';
         }
     };
-    
+
+    const analyzeDomainButtons = document.querySelectorAll('.analyze-domain-btn');
+
+    const handleDomainAnalysis = async (event) => {
+        event.preventDefault();
+        const button = event.currentTarget;
+        const websiteUrl = button.dataset.websiteUrl;
+        const profileId = button.dataset.profileId;
+
+        if (!websiteUrl || !profileId) {
+            alert('Error: Website URL or Profile ID is missing.');
+            return;
+        }
+
+        modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Analyzing domain, please wait...</p>';
+        openModal();
+
+        try {
+            const response = await fetch('/recon/analyze-domain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profileId, websiteUrl }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Domain analysis request failed.');
+            }
+
+            const result = await response.json();
+            const analysisData = result.data;
+
+            let resultHtml = `<h4>Analysis for: ${analysisData.domain}</h4>`;
+
+            // Display WHOIS Info
+            if (analysisData.whois && !analysisData.whois.error) {
+                resultHtml += '<h5>WHOIS Information</h5><table class="metadata-table">';
+                for (const [key, value] of Object.entries(analysisData.whois)) {
+                    resultHtml += `<tr><td>${key.replace(/_/g, ' ').toUpperCase()}</td><td>${Array.isArray(value) ? value.join(', ') : value}</td></tr>`;
+                }
+                resultHtml += '</table>';
+            } else {
+                 resultHtml += '<p>No WHOIS information found.</p>';
+            }
+
+            // Display DNS Info
+            if (analysisData.dns && Object.keys(analysisData.dns).length > 0) {
+                 resultHtml += '<h5 style="margin-top: 15px;">DNS Records</h5><table class="metadata-table">';
+                 for (const [key, value] of Object.entries(analysisData.dns)) {
+                    resultHtml += `<tr><td>${key}</td><td>${value.join('<br>')}</td></tr>`;
+                }
+                resultHtml += '</table>';
+            } else {
+                resultHtml += '<p>No common DNS records found.</p>';
+            }
+
+            modalBody.innerHTML = resultHtml;
+
+        } catch (error) {
+            console.error('Domain analysis fetch error:', error);
+            modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while communicating with the server. Please try again.</p>';
+        }
+    };
+
+    analyzeDomainButtons.forEach(button => {
+        button.addEventListener('click', handleDomainAnalysis);
+    });
+
     analyzeButtons.forEach(button => {
         button.addEventListener('click', handleImageAnalysis);
     });
