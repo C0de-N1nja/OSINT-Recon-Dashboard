@@ -1,4 +1,4 @@
-const { exec } = require("child_process");
+const { exec, spawn } = require("child_process");
 const reconProfile = require("../models/ReconProfile");
 const path = require('path');
 const { calculateRiskScore, enrichProfileEntities } = require("../utils/enrichment");
@@ -19,6 +19,49 @@ function executeScript(command) {
                 resolve({ error: true, message: "Invalid JSON response", platform: command.split('/').pop().split('.')[0] });
             }
         });
+    });
+}
+
+function executeScriptWithStdin(commandWithArgs, data) {
+    return new Promise((resolve) => {
+        const parts = commandWithArgs.split(' ');
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        const process = spawn(cmd, args);
+
+        let stdout = '';
+        let stderr = '';
+
+        process.stdout.on('data', (data) => {
+            stdout += data.toString();
+        });
+
+        process.stderr.on('data', (data) => {
+            stderr += data.toString();
+        });
+
+        process.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Script with stdin failed: ${commandWithArgs}`, stderr);
+                return resolve({ error: true, message: `Script exited with code ${code}. Error: ${stderr}` });
+            }
+            try {
+                const result = JSON.parse(stdout);
+                resolve(result);
+            } catch (parseError) {
+                console.error(`Failed to parse JSON from stdin script: ${commandWithArgs}`, stdout);
+                resolve({ error: true, message: "Invalid JSON response" });
+            }
+        });
+
+        process.on('error', (err) => {
+             console.error('Failed to start subprocess.', err);
+             resolve({ error: true, message: 'Failed to start subprocess.' });
+        });
+
+        process.stdin.write(data);
+        process.stdin.end();
     });
 }
 
@@ -226,7 +269,7 @@ exports.analyzeImage = async function (req, res) {
         const pythonCmd = process.env.PYTHON_COMMAND || 'python3';
         const command = `${pythonCmd} ./python/utils/image_metadata_analyzer.py "${imageUrl}"`;
 
-        const result = await executeScript(command);
+        const result = await executeScriptWithStdin(command, imageUrl);
         
         if (result.error || result.status === 'error') {
              return res.status(500).json({ status: 'error', message: result.message || "Failed to analyze image." });

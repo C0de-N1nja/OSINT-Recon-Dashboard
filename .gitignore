@@ -15,5 +15,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+instagram_debug*
 
 phases.txt
