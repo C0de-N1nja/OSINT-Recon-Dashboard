@@ -1,6 +1,7 @@
 const { exec, spawn } = require("child_process");
 const reconProfile = require('../models/ReconProfile');
 const { calculateRiskScore, enrichProfileEntities, generateGraphData } = require("./enrichment");
+const { trackChanges } = require('./historyTracker');
 
 function executeScript(command) {
     return new Promise((resolve) => {
@@ -57,6 +58,9 @@ async function performDeepScan(profileId, platforms) {
         const profile = await reconProfile.findById(profileId);
         if (!profile) throw new Error("Profile not found during deep scan");
 
+        // Make a copy of the profile before change it
+        const oldProfileData = profile.toObject();
+        
         const platformsToScrape = Array.isArray(platforms) ? platforms : [platforms];
         await reconProfile.findByIdAndUpdate(profileId, {
             $addToSet: { scrapesAttempted: { $each: platformsToScrape } }
@@ -120,6 +124,9 @@ async function performDeepScan(profileId, platforms) {
         // Calculate Risk Score
         profile.riskScore = calculateRiskScore(profile);
         profile.status = 'scraping_complete';
+
+        // Call the history tracker right before saving
+        await trackChanges(oldProfileData, profile);
 
         // Save final profile
         await profile.save();
