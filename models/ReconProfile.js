@@ -81,6 +81,10 @@ const ReconProfileSchema = new mongoose.Schema({
 	domainIntelligence: {
         type: Array,
         default: []
+    },
+	isMonitoring: {
+        type: Boolean,
+        default: false
     }
 });
 

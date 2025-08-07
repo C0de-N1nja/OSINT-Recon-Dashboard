@@ -3,6 +3,7 @@ const reconRoutes = require("./routes/reconRoutes")
 const connectDB = require("./config/db")
 const dotenv = require('dotenv');
 dotenv.config();
+const scheduler = require('./utils/scheduler');
 
 const PORT = 3000
 const app = express()
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 connectDB()
+scheduler.start();
 
 app.listen(PORT, function () {
     console.log(`Server is running on http://localhost:${PORT}`);

@@ -253,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create the graph instance
             const network = new vis.Network(graphContainer, graphData, options);
 
-            // If we are in interactive mode, stabilize the graph after a few seconds for better UX
             if (!isPrintMode) {
                 setTimeout(() => {
                     network.setOptions({ physics: false });
@@ -264,6 +263,29 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to parse or render graph data:', error);
             graphContainer.innerHTML = '<p style="color: #f8d7da;">Error rendering relationship graph.</p>';
         }
+    }
+
+    const monitorBtn = document.getElementById('monitor-btn');
+    if (monitorBtn) {
+        monitorBtn.addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            const profileId = button.dataset.profileId;
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+
+            try {
+                const response = await fetch(`/recon/profile/${profileId}/monitor`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success && result.isMonitoring) {
+                    button.innerHTML = '<i class="fa-solid fa-check"></i> Monitoring Active';
+                } else {
+                    button.innerHTML = '<i class="fa-solid fa-times"></i> Error';
+                }
+            } catch (err) {
+                console.error("Failed to enable monitoring:", err);
+                button.innerHTML = '<i class="fa-solid fa-times"></i> Error';
+            }
+        });
     }
 
 });

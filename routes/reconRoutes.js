@@ -16,5 +16,6 @@ router.post("/recon/start", reconController.startInitialScan)
 router.post("/recon/scrape", reconController.runTargetedScrape)
 router.post("/recon/analyze-image", reconController.analyzeImage);
 router.post("/recon/analyze-domain", reconController.analyzeDomain);
+router.post("/recon/profile/:id/monitor", reconController.toggleMonitoring);
 
 module.exports = router

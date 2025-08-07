@@ -75,6 +75,12 @@
             <i class="fa-solid fa-file-pdf"></i> Export as PDF
         </a>
         
+        <button id="monitor-btn" class="button-link" data-profile-id="<%= profile._id %>" 
+                <%= profile.isMonitoring ? 'disabled' : '' %>>
+            <i class="fa-solid fa-bell"></i> 
+            <%= profile.isMonitoring ? 'Monitoring Active' : 'Start Monitoring' %>
+        </button>
+
         <a href="/profile/intermediate/<%= profile._id %>" class="button-link">
             <i class="fa-solid fa-magnifying-glass-plus"></i> Scrape More
         </a>
