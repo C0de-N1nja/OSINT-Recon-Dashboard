@@ -266,3 +266,41 @@ exports.getProfileHistory = async (req, res) => {
         res.status(500).json({ error: "Server error while fetching history." });
     }
 };
+
+exports.huntForLeaks = async function (req, res) {
+    try {
+        const profileId = req.body.profileId;
+        const profile = await reconProfile.findById(profileId).lean();
+
+        if (!profile) {
+            return res.status(404).json({ error: "Profile not found." });
+        }
+
+        let keywords = new Set();
+        keywords.add(profile.primaryUsername);
+        if (profile.enrichedEntities && profile.enrichedEntities.PERSON) {
+            profile.enrichedEntities.PERSON.forEach(p => keywords.add(p.text));
+        }
+
+        const pythonCmd = process.env.PYTHON_COMMAND || 'python3';
+        const command = `${pythonCmd} ./python/utils/leak_hunter.py`;
+        const keywordsJson = JSON.stringify(Array.from(keywords));
+
+        const result = await executeScriptWithStdin(command, keywordsJson);
+
+        if (result.error || result.status === 'error') {
+            console.error("Leak hunter script returned an error:", result.message);
+            return res.status(500).json({ status: 'error', message: "The leak hunter script failed." });
+        }
+
+        await reconProfile.findByIdAndUpdate(profileId, {
+            $set: { pastebinLeaks: result.leaks_found }
+        });
+
+        res.status(200).json(result);
+
+    } catch (err) {
+        console.error("Leak hunt controller error:", err);
+        res.status(500).json({ status: 'error', message: "Server error during leak hunt." });
+    }
+};

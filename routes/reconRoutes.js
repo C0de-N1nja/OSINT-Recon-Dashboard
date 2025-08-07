@@ -19,5 +19,6 @@ router.post("/recon/scrape", reconController.runTargetedScrape)
 router.post("/recon/analyze-image", reconController.analyzeImage);
 router.post("/recon/analyze-domain", reconController.analyzeDomain);
 router.post("/recon/profile/:id/monitor", reconController.toggleMonitoring);
+router.post("/recon/hunt-for-leaks", reconController.huntForLeaks);
 
 module.exports = router

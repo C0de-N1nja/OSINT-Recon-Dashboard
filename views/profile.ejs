@@ -85,6 +85,10 @@
             <%= profile.isMonitoring ? 'Monitoring Active' : 'Start Monitoring' %>
         </button>
 
+        <button id="leak-hunt-btn" class="button-link" data-profile-id="<%= profile._id %>" style="background-color: #d9534f;">
+            <i class="fa-solid fa-user-secret"></i> Hunt for Leaks
+        </button>
+
         <a href="/profile/intermediate/<%= profile._id %>" class="button-link">
             <i class="fa-solid fa-magnifying-glass-plus"></i> Scrape More
         </a>

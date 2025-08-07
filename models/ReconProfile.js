@@ -85,6 +85,10 @@ const ReconProfileSchema = new mongoose.Schema({
 	isMonitoring: {
         type: Boolean,
         default: false
+    },
+	pastebinLeaks: {
+        type: Array,
+        default: []
     }
 });
 

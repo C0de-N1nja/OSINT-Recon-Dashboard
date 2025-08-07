@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('metadata-modal');
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.querySelector('#metadata-modal h3'); // <-- ADD THIS LINE
     const analyzeButtons = document.querySelectorAll('.analyze-image-btn');
 
     const openModal = () => {
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        modalTitle.innerText = 'Image Metadata Analysis'; // <-- ADD THIS LINE
         modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Analyzing image, please wait...</p>';
         openModal();
 
@@ -133,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        modalTitle.innerText = 'Domain Intelligence'; // <-- ADD THIS LINE
         modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Analyzing domain, please wait...</p>';
         openModal();
 
@@ -329,6 +332,55 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
                 console.error("Failed to display history:", err);
                 modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while fetching the history.</p>';
+            }
+        });
+    }
+
+    const leakHuntBtn = document.getElementById('leak-hunt-btn');
+    if (leakHuntBtn) {
+        leakHuntBtn.addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            const profileId = button.dataset.profileId;
+
+            modalTitle.innerText = 'Pastebin Leak Hunt'; // <-- ADD THIS LINE
+            modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Hunting for leaks on Pastebin...</p>';
+            openModal();
+
+            try {
+                const response = await fetch('/recon/hunt-for-leaks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ profileId }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to hunt for leaks.');
+                }
+                const result = await response.json();
+                
+                let resultHtml = '<h4>Pastebin Leak Hunt Results</h4>';
+                if (result.leaks_found && result.leaks_found.length > 0) {
+                    resultHtml += '<p>Found potential leaks on the following pages:</p>';
+                    result.leaks_found.forEach(leak => {
+                        resultHtml += `
+                            <div class="history-event">
+                                <div class="history-meta">
+                                    <a href="${leak.url}" target="_blank" rel="noopener noreferrer">${leak.url} <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>
+                                </div>
+                                <div class="history-change">
+                                    <em>Snippet: ${leak.snippet}</em>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultHtml += '<p>No public leaks found for the target\'s identifiers on Pastebin.</p>';
+                }
+                modalBody.innerHTML = resultHtml;
+
+            } catch (err) {
+                console.error("Failed to hunt for leaks:", err);
+                modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while hunting for leaks.</p>';
             }
         });
     }
