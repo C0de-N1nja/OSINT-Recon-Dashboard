@@ -1,0 +1,28 @@
+<%- include('partials/header', { pageName: 'login' }) %>
+<div class="auth-container">
+    <div class="card">
+        <h2>Login to Your Account</h2>
+        <% if (locals.error) { %>
+            <div class="error-message"><%= error %></div>
+        <% } %>
+        <form action="/auth/login" method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="button-primary">Login</button>
+        </form>
+        <div class="or-divider">OR</div>
+        <a href="/auth/google" class="google-btn">
+            <i class="fab fa-google"></i> Login with Google
+        </a>
+        <div class="auth-switch">
+            <p>Don't have an account? <a href="/auth/register">Register</a></p>
+        </div>
+    </div>
+</div>
+<%- include('partials/footer') %>

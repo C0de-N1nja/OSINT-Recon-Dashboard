@@ -59,7 +59,10 @@ function executeScriptWithStdin(commandWithArgs, data) {
 // --- ROUTE HANDLERS ---
 
 exports.renderHome = (req, res) => {
-    res.render("index", { pageName: 'home' });
+    res.render("index", { 
+        pageName: 'home',
+        user: req.user // <-- ADD THIS
+    });
 };
 
 exports.startInitialScan = (req, res) => {
@@ -94,7 +97,10 @@ exports.renderIntermediateProfile = async (req, res) => {
     try {
         const profile = await reconProfile.findById(req.params.id).lean();
         if (!profile) return res.status(404).send("Profile not found");
-        res.render("intermediate_profile", { profile, pageName: 'intermediate' });
+        res.render("intermediate_profile", { 
+            profile, pageName: 'intermediate', 
+            user: req.user // <-- ADD THIS
+        });
     } catch (err) {
         console.log("Error fetching intermediate profile:", err);
         res.status(500).send("Error fetching profile.");
@@ -143,7 +149,8 @@ exports.getProfile = async (req, res) => {
         res.render("profile", { 
             profile: foundProfile.toObject(),
             graphData: JSON.stringify(graphData), 
-            pageName: 'profile' 
+            pageName: 'profile',
+            user: req.user // <-- ADD THIS
         });
     } catch (err) {
         console.log("[ERROR] Error fetching profile:", err);

@@ -184,3 +184,38 @@ button:disabled {
 .history-new {
     color: #89d489;
 }
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-title {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.nav-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-user-info span {
+    font-weight: bold;
+}
+
+.button-link-logout {
+    background-color: #d9534f;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.button-link-logout:hover {
+    background-color: #c9302c;
+}

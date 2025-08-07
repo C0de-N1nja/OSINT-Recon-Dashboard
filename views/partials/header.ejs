@@ -17,8 +17,15 @@
 </head>
 <body>
     <nav>
-        <div class="container">
-            <h1>Ethical OSINT Dashboard</h1>
+        <div class="container nav-container">
+            <h1><a href="/" class="nav-title">Ethical OSINT Dashboard</a></h1>
+            
+            <% if (locals.user) { %>
+                <div class="nav-user-info">
+                    <span>Welcome, <%= user.name.split(' ')[0] %></span>
+                    <a href="/auth/logout" class="button-link-logout">Logout</a>
+                </div>
+            <% } %>
         </div>
     </nav>
     <main class="container">
