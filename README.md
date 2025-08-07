@@ -1,9 +1,5 @@
 # Ethical OSINT Dashboard
 
-<div align="center">
-  <img src="https://via.placeholder.com/800x400.png/1a1a1a/00aaff?text=Ethical+OSINT+Dashboard" alt="Project Banner">
-</div>
-
 <p align="center">
   <img alt="Node.js" src="https://img.shields.io/badge/Node.js-18.x-339933?style=for-the-badge&logo=nodedotjs">
   <img alt="Express.js" src="https://img.shields.io/badge/Express.js-4.x-000000?style=for-the-badge&logo=express">
