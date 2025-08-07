@@ -158,3 +158,29 @@ button:disabled {
     color: #ccc;
     width: 30%;
 }
+
+.history-event {
+    border-bottom: 1px solid #444;
+    padding: 10px 5px;
+    margin-bottom: 10px;
+}
+.history-event:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.history-meta {
+    font-size: 0.9em;
+    color: #888;
+    margin-bottom: 5px;
+}
+.history-change {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+.history-old {
+    color: #ff7878;
+    text-decoration: line-through;
+}
+.history-new {
+    color: #89d489;
+}

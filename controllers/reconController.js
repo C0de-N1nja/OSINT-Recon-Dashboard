@@ -3,6 +3,7 @@ const reconProfile = require("../models/ReconProfile");
 const { calculateRiskScore, enrichProfileEntities, generateGraphData } = require("../utils/enrichment");
 const { performDeepScan } = require('../utils/reconService');
 const puppeteer = require('puppeteer');
+const HistoryEvent = require('../models/HistoryEvent');
 
 function executeScript(command) {
     return new Promise((resolve) => {
@@ -247,5 +248,21 @@ exports.analyzeDomain = async (req, res) => {
     } catch (err) {
         console.error("Domain analysis controller error:", err);
         res.status(500).json({ status: 'error', message: "Server error." });
+    }
+};
+
+exports.getProfileHistory = async (req, res) => {
+    try {
+        const profileId = req.params.id;
+        // Find all events for this profile and sort them by most recent first
+        const historyEvents = await HistoryEvent.find({ profileId: profileId }).sort({ timestamp: -1 });
+
+        if (!historyEvents) {
+            return res.status(404).json([]);
+        }
+        res.status(200).json(historyEvents);
+    } catch (err) {
+        console.error("Error fetching profile history:", err);
+        res.status(500).json({ error: "Server error while fetching history." });
     }
 };

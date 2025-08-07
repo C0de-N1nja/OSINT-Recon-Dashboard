@@ -288,4 +288,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            const profileId = button.dataset.profileId;
+
+            modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Fetching history...</p>';
+            openModal();
+
+            try {
+                const response = await fetch(`/recon/profile/${profileId}/history`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch history.');
+                }
+                const historyEvents = await response.json();
+                
+                let resultHtml = '<h4>Profile Change History</h4>';
+                if (historyEvents.length === 0) {
+                    resultHtml += '<p>No changes have been recorded for this profile yet.</p>';
+                } else {
+                    historyEvents.forEach(event => {
+                        resultHtml += `
+                            <div class="history-event">
+                                <div class="history-meta">
+                                    <strong>${new Date(event.timestamp).toLocaleString()}</strong> - 
+                                    ${event.platform} / ${event.field}
+                                </div>
+                                <div class="history-change">
+                                    <span class="history-old">${event.oldValue || '<em>(empty)</em>'}</span>
+                                    →
+                                    <span class="history-new">${event.newValue || '<em>(empty)</em>'}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                modalBody.innerHTML = resultHtml;
+
+            } catch (err) {
+                console.error("Failed to display history:", err);
+                modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while fetching the history.</p>';
+            }
+        });
+    }
+
 });

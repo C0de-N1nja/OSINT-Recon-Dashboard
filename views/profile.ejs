@@ -74,6 +74,10 @@
         <a href="/profile/<%= profile._id %>/export/pdf" class="button-link" target="_blank">
             <i class="fa-solid fa-file-pdf"></i> Export as PDF
         </a>
+
+        <button id="history-btn" class="button-link" data-profile-id="<%= profile._id %>">
+            <i class="fa-solid fa-timeline"></i> View History
+        </button>
         
         <button id="monitor-btn" class="button-link" data-profile-id="<%= profile._id %>" 
                 <%= profile.isMonitoring ? 'disabled' : '' %>>
