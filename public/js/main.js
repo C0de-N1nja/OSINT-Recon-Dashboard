@@ -1,388 +1,311 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const profileId = document.body.dataset.profileId || (document.getElementById('monitor-btn') ? document.getElementById('monitor-btn').dataset.profileId : null);
 
-    const reconForm = document.getElementById('recon-form');
-    if (reconForm) {
-        const spinner = document.getElementById('loading-spinner');
+    // --- MODAL & LOADER ---
+    const mainModal = document.getElementById('metadata-modal');
+    const terminalModal = document.getElementById('terminal-loader-modal');
+    const mainModalCloseBtn = document.getElementById('modal-close-btn');
+    const mainModalBody = document.getElementById('modal-body');
+    const mainModalTitle = document.querySelector('#metadata-modal h3');
+
+    const openModal = () => mainModal.style.display = 'flex';
+    const closeModal = () => mainModal.style.display = 'none';
+
+    if (mainModalCloseBtn) mainModalCloseBtn.addEventListener('click', closeModal);
+    if (mainModal) mainModal.addEventListener('click', (e) => e.target === mainModal && closeModal());
+
+    const showTerminalLoader = (title, messages) => {
+        if (!terminalModal) return;
+        const titleEl = terminalModal.querySelector('.terminal-title');
+        const outputEl = terminalModal.querySelector('.terminal-output');
+        titleEl.textContent = title;
+        outputEl.innerHTML = '';
+        terminalModal.style.display = 'flex';
+
+        let i = 0;
+        function typeMessage() {
+            if (i < messages.length) {
+                const p = document.createElement('p');
+                p.innerHTML = messages[i];
+                outputEl.appendChild(p);
+                outputEl.scrollTop = outputEl.scrollHeight;
+                i++;
+                setTimeout(typeMessage, Math.random() * 150 + 50);
+            }
+        }
+        typeMessage();
+    };
+
+    const hideTerminalLoader = () => {
+        if (terminalModal) terminalModal.style.display = 'none';
+    };
+    
+    // --- API CALL HELPER ---
+    const apiPost = async (url, body) => {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`API POST request to ${url} failed:`, error);
+            return { error: true, message: error.message };
+        }
+    };
+    
+    // --- PAGE-SPECIFIC INITIALIZATION ---
+    if (document.querySelector('.report-container')) {
+        initProfilePage(profileId);
+    }
+    if (document.getElementById('recon-form')) {
+        initHomePage();
+    }
+    if (document.getElementById('scrape-form')) {
+        initIntermediatePage();
+    }
+
+    // --- INITIALIZATION FUNCTIONS ---
+    function initHomePage() {
+        const reconForm = document.getElementById('recon-form');
         reconForm.addEventListener('submit', () => {
-            if (spinner) spinner.style.display = 'block';
+            const username = reconForm.querySelector('input[name="username"]').value;
+            showTerminalLoader('Initializing Scan...', [
+                `> Target locked: <span class="data-font">${username}</span>`,
+                '> Executing command: ./username_tracker.py',
+                '> Pinging social networks... (This may take a moment)',
+                '> Compiling results... <span class="cursor">|</span>'
+            ]);
         });
     }
 
-    const scrapeForm = document.getElementById('scrape-form');
-    if (scrapeForm) {
-        const spinner = document.getElementById('scraping-spinner');
+    function initIntermediatePage() {
+        const scrapeForm = document.getElementById('scrape-form');
         scrapeForm.addEventListener('submit', () => {
-            if (spinner) spinner.style.display = 'block';
+            const selectedPlatforms = [...scrapeForm.querySelectorAll('input[name="platforms"]:checked')].map(cb => cb.value).join(', ');
+            showTerminalLoader('Initiating Deep Scrape...', [
+                '> Accessing scraping modules...',
+                `> Platforms selected: <span class="data-font">${selectedPlatforms || 'None'}</span>`,
+                '> Launching headless browsers...',
+                '> This process involves advanced analysis and can take several minutes.',
+                '> Executing... <span class="cursor">|</span>'
+            ]);
         });
+
+        const selectAllCheckbox = document.getElementById('select-all');
+        if (selectAllCheckbox) {
+            const platformCheckboxes = document.querySelectorAll('.platform-checkbox');
+            selectAllCheckbox.addEventListener('change', (e) => {
+                platformCheckboxes.forEach(checkbox => {
+                    if (!checkbox.disabled) checkbox.checked = e.target.checked;
+                });
+            });
+        }
     }
 
-    const selectAllCheckbox = document.getElementById('select-all');
-    if (selectAllCheckbox) {
-        const platformCheckboxes = document.querySelectorAll('.platform-checkbox');
-        selectAllCheckbox.addEventListener('change', (e) => {
-            platformCheckboxes.forEach(checkbox => {
-                if (!checkbox.disabled) {
-                    checkbox.checked = e.target.checked;
+    function initProfilePage(profileId) {
+        // Sticky Nav Logic
+        const navLinks = document.querySelectorAll('#report-nav-list a');
+        const sections = [...navLinks].map(link => document.querySelector(link.getAttribute('href')));
+        
+        const onScroll = () => {
+            const scrollPosition = window.scrollY + 150;
+            sections.forEach(section => {
+                if (section && scrollPosition >= section.offsetTop && scrollPosition < section.offsetTop + section.offsetHeight) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === `#${section.id}`);
+                    });
                 }
             });
-        });
-    }
+        };
+        window.addEventListener('scroll', onScroll);
 
-    const modal = document.getElementById('metadata-modal');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
-    const modalBody = document.getElementById('modal-body');
-    const modalTitle = document.querySelector('#metadata-modal h3'); // <-- ADD THIS LINE
-    const analyzeButtons = document.querySelectorAll('.analyze-image-btn');
-
-    const openModal = () => {
-        if (modal) modal.style.display = 'flex';
-    };
-
-    const closeModal = () => {
-        if (modal) modal.style.display = 'none';
-    };
-
-    if (modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', closeModal);
-    }
-
-    if (modal) {
-        modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeModal();
+        // Action Buttons
+        document.querySelector('.action-buttons').addEventListener('click', (e) => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+        
+            const action = button.dataset.action;
+            switch(action) {
+                case 'export-json': window.location.href = `/profile/${profileId}/export/json`; break;
+                case 'export-pdf': window.open(`/profile/${profileId}/export/pdf`, '_blank'); break;
+                case 'view-history': handleHistory(profileId); break;
+                case 'hunt-leaks': handleLeakHunt(profileId); break;
             }
         });
+
+        // Event Listeners for Analysis buttons
+        document.querySelectorAll('.analyze-image-btn').forEach(btn => btn.addEventListener('click', (e) => handleImageAnalysis(e.currentTarget, profileId)));
+        document.querySelectorAll('.analyze-domain-btn').forEach(btn => btn.addEventListener('click', (e) => handleDomainAnalysis(e.currentTarget, profileId)));
+        
+        // Relationship Graph
+        renderGraph();
+
+        // Monitor button
+        const monitorBtn = document.getElementById('monitor-btn');
+        if (monitorBtn) {
+            monitorBtn.addEventListener('click', async () => {
+                monitorBtn.disabled = true;
+                monitorBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+                const result = await apiPost(`/recon/profile/${profileId}/monitor`, {});
+                if (result.success && result.isMonitoring) {
+                    monitorBtn.innerHTML = '<i class="fa-solid fa-check"></i> Monitoring';
+                    document.querySelector('.summary-stat:not(.active):not([class*="risk"])').textContent = 'ACTIVE';
+                    document.querySelector('.summary-stat:not(.active):not([class*="risk"])').classList.add('active');
+                } else {
+                    monitorBtn.innerHTML = '<i class="fa-solid fa-times"></i> Error';
+                }
+            });
+        }
     }
 
-    const handleImageAnalysis = async (event) => {
-        event.preventDefault();
-        const button = event.currentTarget;
+    // --- HANDLER FUNCTIONS ---
+    async function handleHistory(profileId) {
+        mainModalTitle.textContent = 'Profile Change History';
+        mainModalBody.innerHTML = '<div class="spinner" style="display: block;"></div>';
+        openModal();
+
+        const response = await fetch(`/recon/profile/${profileId}/history`);
+        const historyEvents = await response.json();
+        let html = '';
+        if (historyEvents.length === 0) {
+            html = '<p class="no-results">No changes have been recorded for this profile yet.</p>';
+        } else {
+            historyEvents.forEach(event => {
+                html += `
+                    <div class="history-event">
+                        <div class="history-meta">
+                            <strong>${new Date(event.timestamp).toLocaleString()}</strong> - 
+                            <span class="data-font">${event.platform} / ${event.field}</span>
+                        </div>
+                        <div class="history-change">
+                            <span class="history-old">${event.oldValue || '<em>(empty)</em>'}</span>
+                            →
+                            <span class="history-new">${event.newValue || '<em>(empty)</em>'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        mainModalBody.innerHTML = html;
+    }
+
+    async function handleLeakHunt(profileId) {
+        mainModalTitle.textContent = 'Pastebin Leak Hunt';
+        mainModalBody.innerHTML = '<div class="spinner" style="display: block;"></div>';
+        openModal();
+        
+        const result = await apiPost('/recon/hunt-for-leaks', { profileId });
+        let html = '';
+        if (result.error || (result.leaks_found && result.leaks_found.length === 0)) {
+            html = `<p class="no-results">No public leaks found for the target's identifiers on Pastebin.</p>`;
+        } else {
+             html += '<p>Found potential leaks on the following pages:</p>';
+             result.leaks_found.forEach(leak => {
+                html += `
+                    <div class="history-event">
+                        <a href="${leak.url}" target="_blank" rel="noopener noreferrer">${leak.url} <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>
+                    </div>
+                `;
+            });
+        }
+        mainModalBody.innerHTML = html;
+    }
+
+    async function handleImageAnalysis(button, profileId) {
         const imageUrl = button.dataset.imageUrl;
-        const profileId = button.dataset.profileId;
-
-        if (!imageUrl || !profileId) {
-            alert('Error: Image URL or Profile ID is missing.');
-            return;
-        }
-
-        modalTitle.innerText = 'Image Metadata Analysis'; // <-- ADD THIS LINE
-        modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Analyzing image, please wait...</p>';
+        mainModalTitle.textContent = 'Image Metadata Analysis';
+        mainModalBody.innerHTML = '<div class="spinner" style="display: block;"></div>';
         openModal();
 
-        try {
-            const response = await fetch('/recon/analyze-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profileId, imageUrl }),
-            });
+        const result = await apiPost('/recon/analyze-image', { profileId, imageUrl });
+        let html = '<h4>Analysis Results</h4>';
 
-            if (!response.ok) {
-                throw new Error('Analysis request failed on the server.');
-            }
-
-            const result = await response.json();
-            
-            let resultHtml = '<h4>Analysis Results</h4>';
-            
-            const analysisData = result.data;
-            let hasExif = false;
-
-            if (analysisData && analysisData.status !== 'error' && analysisData.status !== 'no_exif_data' && analysisData.status !== 'no_relevant_data_found') {
-                hasExif = true;
-                resultHtml += '<p>The following EXIF metadata was found in the image:</p>';
-                resultHtml += '<table class="metadata-table">';
-                for (const [key, value] of Object.entries(analysisData)) {
-                    if (key === 'GPS' && typeof value === 'object') {
-                        resultHtml += `<tr><td>Map Link</td><td><a href="${value.map_url}" target="_blank" rel="noopener noreferrer">View on Google Maps</a></td></tr>`;
-                    } else {
-                        resultHtml += `<tr><td>${key}</td><td>${value}</td></tr>`;
-                    }
-                }
-                resultHtml += '</table>';
-            } else {
-                resultHtml += '<p>No direct EXIF metadata was found in this image. This is common for social media sites.</p>';
-            }
-
-            resultHtml += '<hr style="margin: 15px 0;"><h4>Investigation Pivots</h4>';
-
-            if (imageUrl.startsWith('http')) {
-                const searchUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`;
-                resultHtml += `<a href="${searchUrl}" target="_blank" class="button-link" style="background-color: #4285F4; margin-top: 10px;">
-                                <i class="fa-brands fa-google"></i> Search for this Image with Google Lens
-                               </a>`;
-            } else {
-                resultHtml += '<p>Reverse image search is not available for this type of embedded image because it does not have a public URL.</p>';
-            }
-
-            modalBody.innerHTML = resultHtml;
-
-        } catch (error) {
-            console.error('Fetch error:', error);
-            modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while communicating with the server. Please try again.</p>';
+        if (result.error || result.data?.status === 'error') {
+            html += '<p class="no-results">An error occurred during analysis.</p>';
+        } else if (result.data?.status?.includes('no_')) {
+            html += '<p class="no-results">No EXIF metadata was found in this image. This is common for social media sites.</p>';
+        } else {
+             html += '<table class="metadata-table">';
+             for (const [key, value] of Object.entries(result.data)) {
+                 if (key === 'GPS' && typeof value === 'object') {
+                     html += `<tr><td>Map Link</td><td><a href="${value.map_url}" target="_blank" rel="noopener noreferrer">View on Google Maps</a></td></tr>`;
+                 } else {
+                     html += `<tr><td>${key}</td><td>${value}</td></tr>`;
+                 }
+             }
+             html += '</table>';
         }
-    };
+        html += '<hr style="margin: 15px 0; border-color: var(--color-border);"><h4>Investigation Pivots</h4>';
+        const searchUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`;
+        html += `<a href="${searchUrl}" target="_blank" class="button-link" style="background-color: #4285F4; margin-top: 10px;">
+                    <i class="fa-brands fa-google"></i> Search with Google Lens
+                 </a>`;
+        mainModalBody.innerHTML = html;
+    }
 
-    const analyzeDomainButtons = document.querySelectorAll('.analyze-domain-btn');
-
-    const handleDomainAnalysis = async (event) => {
-        event.preventDefault();
-        const button = event.currentTarget;
+    async function handleDomainAnalysis(button, profileId) {
         const websiteUrl = button.dataset.websiteUrl;
-        const profileId = button.dataset.profileId;
-
-        if (!websiteUrl || !profileId) {
-            alert('Error: Website URL or Profile ID is missing.');
-            return;
-        }
-
-        modalTitle.innerText = 'Domain Intelligence'; // <-- ADD THIS LINE
-        modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Analyzing domain, please wait...</p>';
+        mainModalTitle.textContent = 'Domain Intelligence';
+        mainModalBody.innerHTML = '<div class="spinner" style="display: block;"></div>';
         openModal();
 
-        try {
-            const response = await fetch('/recon/analyze-domain', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profileId, websiteUrl }),
-            });
+        const result = await apiPost('/recon/analyze-domain', { profileId, websiteUrl });
+        const data = result.data;
+        let html = `<h4>Analysis for: <span class="data-font">${data.domain}</span></h4>`;
 
-            if (!response.ok) {
-                throw new Error('Domain analysis request failed.');
+        if (data.whois && !data.whois.error) {
+            html += '<h5>WHOIS Information</h5><table class="metadata-table">';
+            for (const [key, value] of Object.entries(data.whois)) {
+                html += `<tr><td>${key.replace(/_/g, ' ').toUpperCase()}</td><td>${Array.isArray(value) ? value.join(', ') : value}</td></tr>`;
             }
-
-            const result = await response.json();
-            const analysisData = result.data;
-
-            let resultHtml = `<h4>Analysis for: ${analysisData.domain}</h4>`;
-
-            // Display WHOIS Info
-            if (analysisData.whois && !analysisData.whois.error) {
-                resultHtml += '<h5>WHOIS Information</h5><table class="metadata-table">';
-                for (const [key, value] of Object.entries(analysisData.whois)) {
-                    resultHtml += `<tr><td>${key.replace(/_/g, ' ').toUpperCase()}</td><td>${Array.isArray(value) ? value.join(', ') : value}</td></tr>`;
-                }
-                resultHtml += '</table>';
-            } else {
-                 resultHtml += '<p>No WHOIS information found.</p>';
-            }
-
-            // Display DNS Info
-            if (analysisData.dns && Object.keys(analysisData.dns).length > 0) {
-                 resultHtml += '<h5 style="margin-top: 15px;">DNS Records</h5><table class="metadata-table">';
-                 for (const [key, value] of Object.entries(analysisData.dns)) {
-                    resultHtml += `<tr><td>${key}</td><td>${value.join('<br>')}</td></tr>`;
-                }
-                resultHtml += '</table>';
-            } else {
-                resultHtml += '<p>No common DNS records found.</p>';
-            }
-
-            modalBody.innerHTML = resultHtml;
-
-        } catch (error) {
-            console.error('Domain analysis fetch error:', error);
-            modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while communicating with the server. Please try again.</p>';
+            html += '</table>';
         }
-    };
 
-    analyzeDomainButtons.forEach(button => {
-        button.addEventListener('click', handleDomainAnalysis);
-    });
+        if (data.dns && Object.keys(data.dns).length > 0) {
+            html += '<h5 style="margin-top: 15px;">DNS Records</h5><table class="metadata-table">';
+            for (const [key, value] of Object.entries(data.dns)) {
+                html += `<tr><td>${key}</td><td>${value.join('<br>')}</td></tr>`;
+            }
+            html += '</table>';
+        }
+        mainModalBody.innerHTML = html;
+    }
 
-    analyzeButtons.forEach(button => {
-        button.addEventListener('click', handleImageAnalysis);
-    });
-
-    const graphContainer = document.getElementById('relationship-graph');
-    if (graphContainer) {
+    function renderGraph() {
+        const container = document.getElementById('relationship-graph');
+        if (!container) return;
         try {
-            // Read and parse the graph data embedded in the HTML
-            const graphDataString = graphContainer.dataset.graphData;
-            const graphData = JSON.parse(graphDataString);
-
-            // Check if we are in "print mode" for the PDF export
-            const urlParams = new URLSearchParams(window.location.search);
-            const isPrintMode = urlParams.get('print') === 'true';
-
-            // Define the visual options for the graph
-            const options = {
+            const data = JSON.parse(container.dataset.graphData);
+                        const options = {
                 nodes: {
-                    shape: 'dot',
-                    size: 20,
-                    font: {
-                        size: 14,
-                        color: '#ffffff'
-                    },
+                    shape: 'dot', size: 20,
+                    font: { size: 14, color: '#EAEAEA', face: 'Fira Code' },
                     borderWidth: 2,
                 },
                 edges: {
                     width: 1,
-                    color: {
-                        color: '#848484',
-                        highlight: '#00aaff'
-                    },
-                    arrows: {
-                      to: { enabled: true, scaleFactor: 0.5 }
-                    },
-                    font: {
-                        size: 10,
-                        align: 'middle'
-                    }
+                    color: { color: '#8899A6', highlight: '#00aaff' },
+                    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+                    font: { align: 'middle', color: '#8899A6', size: 12 }
                 },
-                physics: {
-                    // If in print mode, disable physics. Otherwise, enable them.
-                    enabled: !isPrintMode, 
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -50,
-                        centralGravity: 0.01,
-                        springLength: 100,
-                        springConstant: 0.08,
-                        avoidOverlap: 0.5
-                    }
-                },
+                physics: { enabled: true, solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -50, centralGravity: 0.01, springLength: 100, avoidOverlap: 0.5 } },
                 groups: {
-                    target: { color: { background: '#ff4c4c', border: '#ff7878' }, size: 30 },
-                    platform: { color: { background: '#00aaff', border: '#59caff' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf0ac', size: 50, color: '#FFFFFF' } },
-                    person: { color: { background: '#f0ad4e', border: '#f5c986' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf007', size: 50, color: '#FFFFFF' } },
-                    org: { color: { background: '#5cb85c', border: '#89d489' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf1ad', size: 50, color: '#FFFFFF' } },
-                    gpe: { color: { background: '#5bc0de', border: '#89d8eb' }, shape: 'icon', icon: { face: 'FontAwesome', code: '\uf57d', size: 50, color: '#FFFFFF' } }
+                    target: { color: { background: '#00ffaa', border: '#00ffaa' }, size: 30 }, // Phosphor Green
+                    platform: { color: { background: '#00aaff', border: '#00aaff' } }, // Tron Blue
+                    person: { color: { background: '#FFBF00', border: '#FFBF00' } }, // Amber
+                    org: { color: { background: '#5cb85c', border: '#89d489' } },
+                    gpe: { color: { background: '#5bc0de', border: '#89d8eb' } }
                 },
-                interaction: {
-                    hover: true
-                }
+                interaction: { hover: true }
             };
-
-            // Create the graph instance
-            const network = new vis.Network(graphContainer, graphData, options);
-
-            if (!isPrintMode) {
-                setTimeout(() => {
-                    network.setOptions({ physics: false });
-                }, 3000);
-            }
-
-        } catch (error) {
-            console.error('Failed to parse or render graph data:', error);
-            graphContainer.innerHTML = '<p style="color: #f8d7da;">Error rendering relationship graph.</p>';
+            const network = new vis.Network(container, data, options);
+            setTimeout(() => network.setOptions({ physics: false }), 3000);
+        } catch (e) {
+            console.error('Failed to render graph:', e);
+            container.innerHTML = '<p class="no-results">Error rendering relationship graph.</p>';
         }
     }
-
-    const monitorBtn = document.getElementById('monitor-btn');
-    if (monitorBtn) {
-        monitorBtn.addEventListener('click', async (event) => {
-            const button = event.currentTarget;
-            const profileId = button.dataset.profileId;
-            button.disabled = true;
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
-
-            try {
-                const response = await fetch(`/recon/profile/${profileId}/monitor`, { method: 'POST' });
-                const result = await response.json();
-                if (result.success && result.isMonitoring) {
-                    button.innerHTML = '<i class="fa-solid fa-check"></i> Monitoring Active';
-                } else {
-                    button.innerHTML = '<i class="fa-solid fa-times"></i> Error';
-                }
-            } catch (err) {
-                console.error("Failed to enable monitoring:", err);
-                button.innerHTML = '<i class="fa-solid fa-times"></i> Error';
-            }
-        });
-    }
-
-    const historyBtn = document.getElementById('history-btn');
-    if (historyBtn) {
-        historyBtn.addEventListener('click', async (event) => {
-            const button = event.currentTarget;
-            const profileId = button.dataset.profileId;
-
-            modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Fetching history...</p>';
-            openModal();
-
-            try {
-                const response = await fetch(`/recon/profile/${profileId}/history`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch history.');
-                }
-                const historyEvents = await response.json();
-                
-                let resultHtml = '<h4>Profile Change History</h4>';
-                if (historyEvents.length === 0) {
-                    resultHtml += '<p>No changes have been recorded for this profile yet.</p>';
-                } else {
-                    historyEvents.forEach(event => {
-                        resultHtml += `
-                            <div class="history-event">
-                                <div class="history-meta">
-                                    <strong>${new Date(event.timestamp).toLocaleString()}</strong> - 
-                                    ${event.platform} / ${event.field}
-                                </div>
-                                <div class="history-change">
-                                    <span class="history-old">${event.oldValue || '<em>(empty)</em>'}</span>
-                                    →
-                                    <span class="history-new">${event.newValue || '<em>(empty)</em>'}</span>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                modalBody.innerHTML = resultHtml;
-
-            } catch (err) {
-                console.error("Failed to display history:", err);
-                modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while fetching the history.</p>';
-            }
-        });
-    }
-
-    const leakHuntBtn = document.getElementById('leak-hunt-btn');
-    if (leakHuntBtn) {
-        leakHuntBtn.addEventListener('click', async (event) => {
-            const button = event.currentTarget;
-            const profileId = button.dataset.profileId;
-
-            modalTitle.innerText = 'Pastebin Leak Hunt'; // <-- ADD THIS LINE
-            modalBody.innerHTML = '<div class="spinner" style="display: block;"></div><p style="text-align: center;">Hunting for leaks on Pastebin...</p>';
-            openModal();
-
-            try {
-                const response = await fetch('/recon/hunt-for-leaks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profileId }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to hunt for leaks.');
-                }
-                const result = await response.json();
-                
-                let resultHtml = '<h4>Pastebin Leak Hunt Results</h4>';
-                if (result.leaks_found && result.leaks_found.length > 0) {
-                    resultHtml += '<p>Found potential leaks on the following pages:</p>';
-                    result.leaks_found.forEach(leak => {
-                        resultHtml += `
-                            <div class="history-event">
-                                <div class="history-meta">
-                                    <a href="${leak.url}" target="_blank" rel="noopener noreferrer">${leak.url} <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>
-                                </div>
-                                <div class="history-change">
-                                    <em>Snippet: ${leak.snippet}</em>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    resultHtml += '<p>No public leaks found for the target\'s identifiers on Pastebin.</p>';
-                }
-                modalBody.innerHTML = resultHtml;
-
-            } catch (err) {
-                console.error("Failed to hunt for leaks:", err);
-                modalBody.innerHTML = '<p style="color: #f8d7da;">An error occurred while hunting for leaks.</p>';
-            }
-        });
-    }
-
 });

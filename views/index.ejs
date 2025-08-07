@@ -1,16 +1,67 @@
 <%- include('partials/header', { pageName: 'home' }) %>
 
-<div class="card">
-    <p class="step-indicator">Step 1 of 3: Start New Search</p>
-    <h2>Start New Reconnaissance</h2>
-    <p>Enter a username to begin scanning for a public digital footprint.</p>
+    <!-- Main Search Card -->
+    <div class="card search-card">
+        <h2>Analyst Dashboard</h2>
+        <p>Enter a username to begin a new investigation, or select a previous case below.</p>
 
-    <form id="recon-form" action="/recon/start" method="POST" class="recon-form">
-        <input type="text" name="username" placeholder="Enter target username..." required>
-        <button type="submit">Start Username Search</button>
-    </form>
+        <form id="recon-form" action="/recon/start" method="POST" class="recon-form">
+            <input type="text" name="username" placeholder="Enter target username..." required>
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Start Scan</button>
+        </form>
 
-    <div id="loading-spinner" class="spinner"></div>
-</div>
+        <div id="loading-spinner" class="spinner"></div>
+    </div>
 
-<%- include('partials/footer') %>
+    <!-- Dashboard Panels Grid -->
+    <div class="dashboard-grid">
+
+        <!-- Recent Investigations Panel -->
+        <div class="card dashboard-panel">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Investigations</h3>
+            <% if (locals.recentProfiles && recentProfiles.length> 0) { %>
+                <ul class="profile-list">
+                    <% recentProfiles.forEach(profile=> { %>
+                        <li class="profile-list-item">
+                            <a href="/profile/<%= profile._id %>">
+                                <span class="profile-name">
+                                    <%= profile.primaryUsername %>
+                                </span>
+                                <% if (profile.riskScore && profile.riskScore.label) { %>
+                                    <span class="risk-badge <%= profile.riskScore.label.toLowerCase() %>">
+                                        <%= profile.riskScore.label %>
+                                    </span>
+                                    <% } %>
+                            </a>
+                        </li>
+                        <% }) %>
+                </ul>
+                <% } else { %>
+                    <p class="no-results">No recent investigations found.</p>
+                    <% } %>
+        </div>
+
+        <!-- Monitored Profiles Panel -->
+        <div class="card dashboard-panel">
+            <h3><i class="fa-solid fa-satellite-dish"></i> Monitored Profiles</h3>
+            <% if (locals.monitoredProfiles && monitoredProfiles.length> 0) { %>
+                <ul class="profile-list">
+                    <% monitoredProfiles.forEach(profile=> { %>
+                        <li class="profile-list-item">
+                            <a href="/profile/<%= profile._id %>">
+                                <span class="profile-name">
+                                    <%= profile.primaryUsername %>
+                                </span>
+                                <i class="fa-solid fa-bell monitor-icon" title="Monitoring Active"></i>
+                            </a>
+                        </li>
+                        <% }) %>
+                </ul>
+                <% } else { %>
+                    <p class="no-results">No profiles are currently being monitored.</p>
+                    <% } %>
+        </div>
+
+    </div>
+
+    <%- include('partials/footer') %>

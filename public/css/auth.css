@@ -1,15 +1,16 @@
 .auth-container { 
     max-width: 450px; 
-    margin: 3rem auto; 
-    padding: 2rem;
-    background-color: #252526;
-    border: 1px solid #333;
-    border-radius: 8px;
+    margin: 3rem auto;
+}
+
+.auth-container .card {
+    padding: 2.5rem;
 }
 
 .auth-container h2 {
     text-align: center;
     margin-bottom: 2rem;
+    font-weight: 900;
 }
 
 .form-group { 
@@ -19,44 +20,48 @@
 .form-group label { 
     display: block; 
     margin-bottom: 8px; 
-    color: #ccc; 
+    color: var(--color-text-secondary); 
     font-weight: bold;
+    font-size: 0.9rem;
 }
 
 .form-group input { 
     width: 100%; 
     padding: 12px; 
-    background-color: #1a1a1a; 
-    border: 1px solid #444; 
+    background-color: var(--color-background); 
+    border: 1px solid var(--color-border); 
     border-radius: 5px; 
-    color: #e0e0e0; 
+    color: var(--color-text-primary); 
     font-size: 1rem; 
+    font-family: var(--font-data);
     box-sizing: border-box; 
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus {
-    border-color: #00aaff;
     outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary-glow);
 }
 
 .button-primary { 
     width: 100%; 
     padding: 12px; 
-    font-weight: bold;
 }
 
 .or-divider { 
     text-align: center; 
     margin: 2rem 0; 
-    color: #888; 
+    color: var(--color-text-secondary); 
     font-weight: bold;
     display: flex;
     align-items: center;
 }
+
 .or-divider::before, .or-divider::after {
     content: '';
     flex-grow: 1;
-    background: #444;
+    background: var(--color-border);
     height: 1px;
     margin: 0 1rem;
 }
@@ -76,32 +81,36 @@
     box-sizing: border-box; 
     margin-bottom: 1.5rem; 
     font-weight: bold;
+    border: 1px solid #4285F4;
 }
 
 .google-btn:hover { 
     background-color: #357ae8; 
+    border-color: #357ae8;
+    box-shadow: none;
 }
 
 .auth-switch { 
     text-align: center;
     margin-top: 1.5rem; 
+    color: var(--color-text-secondary);
 }
 
 .auth-switch a {
-    color: #00aaff;
+    color: var(--color-primary);
     font-weight: bold;
-    text-decoration: none;
 }
 .auth-switch a:hover {
     text-decoration: underline;
 }
 
 .error-message { 
-    background-color: #5d2226;
-    color: #f8d7da; 
-    border: 1px solid #721c24;
+    background-color: rgba(217, 83, 79, 0.1);
+    color: var(--color-danger); 
+    border: 1px solid var(--color-danger);
     padding: 12px; 
     border-radius: 5px; 
     margin-bottom: 1.5rem; 
     text-align: center; 
+    font-family: var(--font-data);
 }

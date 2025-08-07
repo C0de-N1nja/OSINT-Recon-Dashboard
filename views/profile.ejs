@@ -1,300 +1,172 @@
 <%- include('partials/header', { pageName: 'profile' }) %>
 
-    <div class="profile-header">
-        <h2>Complete Report: <span class="target-name">
-                <%= profile.primaryUsername %>
-            </span></h2>
-        <p class="step-indicator">Step 3 of 3: Review Intelligence</p>
-    </div>
+<div class="report-container">
+    <!-- Sticky Side Navigation -->
+    <aside class="report-nav">
+        <h4><i class="fa-solid fa-list-ul"></i> Report Sections</h4>
+        <ul id="report-nav-list">
+            <li><a href="#section-summary">Summary & Actions</a></li>
+            <li><a href="#section-graph">Relationship Graph</a></li>
+            <% if (profile.scrapesAttempted.includes('github')) { %>
+                <li><a href="#section-github">GitHub</a></li>
+            <% } %>
+            <% if (profile.scrapesAttempted.includes('twitter')) { %>
+                <li><a href="#section-twitter">Twitter (X)</a></li>
+            <% } %>
+            <% if (profile.scrapesAttempted.includes('instagram')) { %>
+                <li><a href="#section-instagram">Instagram</a></li>
+            <% } %>
+            <% if (profile.extractedEntities && Object.values(profile.extractedEntities).some(arr => arr && arr.length > 0)) { %>
+                <li><a href="#section-entities">AI-Extracted Entities</a></li>
+            <% } %>
+            <% if (profile.googleDorks && Object.keys(profile.googleDorks).length > 0) { %>
+                <li><a href="#section-leads">Investigation Leads</a></li>
+            <% } %>
+        </ul>
+    </aside>
 
-
-<!-- Graph Card -->
-    <div class="card">
-        <h3><i class="fa-solid fa-circle-nodes"></i> Relationship Graph</h3>
-        <div id="relationship-graph" 
-             data-graph-data='<%- graphData %>'>
+    <!-- Main Report Content -->
+    <div class="report-content">
+        <div class="profile-header">
+            <h2>Report for: <span class="data-font"><%= profile.primaryUsername %></span></h2>
+            <p>Generated on <%= moment(profile.reconDate).format('MMMM Do YYYY, h:mm:ss a') %></p>
         </div>
-    </div>
 
-    <!-- Risk Score Card -->
-<div class="card">
-    <h3><i class="fa-solid fa-exclamation-triangle"></i> Risk Assessment</h3>
-    <% if (profile.riskScore && profile.riskScore.score !== undefined) { %>
-        <p>
-            <strong>Risk Score:</strong>
-            <span class="risk-score <%= profile.riskScore.label.toLowerCase() %>">
-                <%= profile.riskScore.score %> (<%= profile.riskScore.label %>)
-            </span>
-        </p>
-        <% if (profile.riskScore.breakdown) { %>
-            <p><strong>Score Breakdown:</strong></p>
-            <ul class="platform-list">
-                <% if (profile.riskScore.breakdown.initialScan > 0) { %>
-                    <li>Initial Scan (<%= profile.riskScore.breakdown.initialScan %>): <%= profile.riskScore.breakdown.initialScan / 2 %> platforms found</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.deepScrape.github > 0) { %>
-                    <li>GitHub Profile (<%= profile.riskScore.breakdown.deepScrape.github %>): Bio or Organization present</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.deepScrape.twitter > 0) { %>
-                    <li>Twitter Profile (<%= profile.riskScore.breakdown.deepScrape.twitter %>): Bio, Location, or Website present</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.deepScrape.instagram > 0) { %>
-                    <li>Instagram Profile (<%= profile.riskScore.breakdown.deepScrape.instagram %>): Bio or Website present</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.pii.person > 0) { %>
-                    <li>Person Entities (<%= profile.riskScore.breakdown.pii.person %>): <%= profile.riskScore.breakdown.pii.person / 10 %> names detected</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.pii.location > 0) { %>
-                    <li>Location Entities (<%= profile.riskScore.breakdown.pii.location %>): <%= profile.riskScore.breakdown.pii.location / 10 %> locations detected</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.professional.organization > 0) { %>
-                    <li>Organization Entities (<%= profile.riskScore.breakdown.professional.organization %>): <%= profile.riskScore.breakdown.professional.organization / 15 %> organizations detected</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.engagement.followers > 0) { %>
-                    <li>Follower Count (<%= profile.riskScore.breakdown.engagement.followers %>): Significant followers detected</li>
-                <% } %>
-                <% if (profile.riskScore.breakdown.engagement.verified > 0) { %>
-                    <li>Verified Status (<%= profile.riskScore.breakdown.engagement.verified %>): Verified account detected</li>
-                <% } %>
-            </ul>
-        <% } %>
-    <% } else { %>
-        <p class="no-results">No risk score available.</p>
-    <% } %>
-</div>
+        <!-- Summary & Actions Card -->
+        <div class="card" id="section-summary">
+            <h3><i class="fa-solid fa-circle-info"></i> Summary & Actions</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Risk Score</h4>
+                    <% if (profile.riskScore && profile.riskScore.score !== undefined) { %>
+                        <span class="risk-score <%= profile.riskScore.label.toLowerCase() %>">
+                            <%= profile.riskScore.score %> / 100 (<%= profile.riskScore.label %>)
+                        </span>
+                    <% } else { %>
+                        <p class="no-results">N/A</p>
+                    <% } %>
+                </div>
+                <div class="summary-item">
+                    <h4>Found Profiles</h4>
+                    <span class="summary-stat"><%= profile.usernameResults.length %></span>
+                </div>
+                <div class="summary-item">
+                    <h4>Monitoring Status</h4>
+                    <span class="summary-stat <%= profile.isMonitoring ? 'active' : '' %>">
+                        <%= profile.isMonitoring ? 'ACTIVE' : 'INACTIVE' %>
+                    </span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="button-link" data-action="export-json"><i class="fa-solid fa-file-arrow-down"></i> JSON</button>
+                <button class="button-link" data-action="export-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button class="button-link" data-action="view-history"><i class="fa-solid fa-timeline"></i> History</button>
+                <button id="monitor-btn" class="button-link" data-profile-id="<%= profile._id %>" <%= profile.isMonitoring ? 'disabled' : '' %>>
+                    <i class="fa-solid fa-bell"></i> <%= profile.isMonitoring ? 'Monitoring' : 'Monitor' %>
+                </button>
+                <button class="button-link danger" data-action="hunt-leaks"><i class="fa-solid fa-user-secret"></i> Hunt Leaks</button>
+                <a href="/profile/intermediate/<%= profile._id %>" class="button-link"><i class="fa-solid fa-magnifying-glass-plus"></i> Scrape More</a>
+                <a href="/" class="button-link secondary"><i class="fa-solid fa-house"></i> New Search</a>
 
-    <!-- Action Buttons Card -->
-<div class="card">
-    <h3>Actions</h3>
-    <div class="action-buttons">
-        <a href="/profile/<%= profile._id %>/export/json" class="button-link">
-            <i class="fa-solid fa-file-arrow-down"></i> Export as JSON
-        </a>
-        
-        <a href="/profile/<%= profile._id %>/export/pdf" class="button-link" target="_blank">
-            <i class="fa-solid fa-file-pdf"></i> Export as PDF
-        </a>
+            </div>
+        </div>
 
-        <button id="history-btn" class="button-link" data-profile-id="<%= profile._id %>">
-            <i class="fa-solid fa-timeline"></i> View History
-        </button>
-        
-        <button id="monitor-btn" class="button-link" data-profile-id="<%= profile._id %>" 
-                <%= profile.isMonitoring ? 'disabled' : '' %>>
-            <i class="fa-solid fa-bell"></i> 
-            <%= profile.isMonitoring ? 'Monitoring Active' : 'Start Monitoring' %>
-        </button>
+        <!-- Relationship Graph Card -->
+        <div class="card" id="section-graph">
+            <h3><i class="fa-solid fa-circle-nodes"></i> Relationship Graph</h3>
+            <div id="relationship-graph" data-graph-data='<%- graphData %>'></div>
+        </div>
 
-        <button id="leak-hunt-btn" class="button-link" data-profile-id="<%= profile._id %>" style="background-color: #d9534f;">
-            <i class="fa-solid fa-user-secret"></i> Hunt for Leaks
-        </button>
-
-        <a href="/profile/intermediate/<%= profile._id %>" class="button-link">
-            <i class="fa-solid fa-magnifying-glass-plus"></i> Scrape More
-        </a>
-        
-        <a href="/" class="button-link">
-            <i class="fa-solid fa-house"></i> New Search
-        </a>
-    </div>
-</div>
-    <!-- Initial Scan Results Card -->
-    <div class="card">
-        <h3><i class="fa-solid fa-user-check"></i> Initial Scan: Found Profiles</h3>
-        <% if (profile.usernameResults && profile.usernameResults.length> 0) { %>
-            <ul class="platform-list">
-                <% profile.usernameResults.forEach(result=> { %>
-                    <li><strong>
-                            <%= result.site %>:
-                        </strong> <a href="<%= result.url %>" target="_blank">
-                            <%= result.url %>
-                        </a></li>
-                    <% }) %>
-            </ul>
-            <% } else { %>
-                <p class="no-results">No public profiles found via username scan.</p>
-                <% } %>
-    </div>
-
-    <!-- GitHub Card -->
-<% if (profile.scrapesAttempted.includes('github')) { %>
-    <div class="card">
-        <h3><i class="fa-brands fa-github"></i> GitHub Profile Details</h3>
-        <% if (profile.gitHubData && !profile.gitHubData.error && (profile.gitHubData.bio_text || profile.gitHubData.org || profile.gitHubData.location || profile.gitHubData.website || profile.gitHubData.followers_count)) { %>
-            
-            <% if (profile.gitHubData.profile_pic_url) { %>
-                <div class="profile-picture-container">
-                    <img src="<%= profile.gitHubData.profile_pic_url %>" alt="GitHub Profile Picture" class="profile-picture">
-                    <button class="analyze-image-btn" 
-                            data-image-url="<%= profile.gitHubData.profile_pic_url %>"
-                            data-profile-id="<%= profile._id %>">
-                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
-                    </button>
+        <!-- Platform Cards -->
+        <% const platforms = { github: 'GitHub', twitter: 'Twitter (X)', instagram: 'Instagram' }; %>
+        <% for(const [key, name] of Object.entries(platforms)) { %>
+            <% if (profile.scrapesAttempted.includes(key)) { %>
+                <div class="card" id="section-<%= key %>">
+                    <h3><i class="fa-brands fa-<%= key %>"></i> <%= name %></h3>
+                    <% let data;
+                if (key === 'github') {
+                    data = profile.gitHubData; // Use correct camelCase for GitHub
+                } else {
+                    data = profile[key + 'Data'];
+                } %>
+                    <% if (data && !data.error && (data.bio_text || data.location || data.org || data.followers_count || data.display_name)) { %>
+                        <div class="profile-data-grid">
+                            <% if (data.profile_pic_url) { %>
+                                <div class="profile-picture-container">
+                                    <img src="<%= data.profile_pic_url %>" alt="<%= name %> Profile Picture" class="profile-picture">
+                                    <button class="analyze-image-btn" data-image-url="<%= data.profile_pic_url %>">
+                                        <i class="fa-solid fa-camera-retro"></i> Analyze
+                                    </button>
+                                </div>
+                            <% } %>
+                            <div class="profile-details">
+                                <p><strong>URL:</strong> <a href="<%= data.url %>" target="_blank"><%= data.url %></a></p>
+                                <% if(data.display_name) { %><p><strong>Name:</strong> <%= data.display_name %></p><% } %>
+                                <% if(data.username_handle) { %><p><strong>Handle:</strong> <span class="data-font"><%= data.username_handle %></span></p><% } %>
+                                <p><strong>Bio:</strong> <pre class="bio-box"><%= data.bio_text || 'N/A' %></pre></p>
+                                <% if(data.location) { %><p><strong>Location:</strong> <%= data.location %></p><% } %>
+                                <% if(data.website) { %>
+                                    <p><strong>Website:</strong> <a href="<%= data.website %>" target="_blank"><%= data.website %></a>
+                                    <button class="analyze-domain-btn" data-website-url="<%= data.website %>"><i class="fa-solid fa-network-wired"></i></button>
+                                    </p>
+                                <% } %>
+                                <% if(data.followers_count) { %><p><strong>Followers:</strong> <%= data.followers_count %></p><% } %>
+                                <% if(data.following_count) { %><p><strong>Following:</strong> <%= data.following_count %></p><% } %>
+                                <% if(data.join_date) { %><p><strong>Joined:</strong> <%= data.join_date %></p><% } %>
+                                <% if(data.verified_badge !== undefined) { %><p><strong>Verified:</strong> <%= data.verified_badge ? 'Yes' : 'No' %></p><% } %>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <p class="no-results">Scrape was run, but no detailed public information was found.</p>
+                    <% } %>
                 </div>
             <% } %>
-
-            <p><strong>URL:</strong> <a href="https://github.com/<%= profile.primaryUsername %>" target="_blank">https://github.com/<%= profile.primaryUsername %></a></p>
-            <p><strong>Bio:</strong><pre><%= profile.gitHubData.bio_text || 'N/A' %></pre></p>
-            <p><strong>Organization:</strong> <%= profile.gitHubData.org || 'N/A' %></p>
-            <p><strong>Location:</strong> <%= profile.gitHubData.location || 'N/A' %></p>
-            <p><strong>Website:</strong> <%- profile.gitHubData.website ? `<a href="${profile.gitHubData.website}" target="_blank">${profile.gitHubData.website}</a>` : 'N/A' %>
-            <% if (profile.gitHubData.website) { %>
-        <button class="analyze-domain-btn" data-website-url="<%= profile.gitHubData.website %>" data-profile-id="<%= profile._id %>">
-            <i class="fa-solid fa-network-wired"></i> Analyze
-        </button>
-    <% } %>
-            </p>
-            <p><strong>Followers:</strong> <%= profile.gitHubData.followers_count || 'N/A' %></p>
-            <p><strong>Following:</strong> <%= profile.gitHubData.following_count || 'N/A' %></p>
-        <% } else { %>
-            <p class="no-results">Scrape was run, but no detailed public information was found for GitHub.</p>
         <% } %>
-    </div>
-<% } %>
 
-<!-- Twitter Card -->
-<% if (profile.scrapesAttempted.includes('twitter')) { %>
-    <div class="card">
-        <h3><i class="fa-brands fa-twitter"></i> Twitter (X) Profile Details</h3>
-        <% if (profile.twitterData && !profile.twitterData.error && profile.twitterData.display_name) { %>
-
-            <% if (profile.twitterData.profile_pic_url) { %>
-                <div class="profile-picture-container">
-                    <img src="<%= profile.twitterData.profile_pic_url %>" alt="Twitter Profile Picture" class="profile-picture">
-                    <button class="analyze-image-btn" 
-                            data-image-url="<%= profile.twitterData.profile_pic_url %>"
-                            data-profile-id="<%= profile._id %>">
-                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
-                    </button>
-                </div>
-            <% } %>
-
-            <p><strong>Display Name:</strong> <%= profile.twitterData.display_name %></p>
-            <p><strong>Username:</strong> <%= profile.twitterData.username_handle %></p>
-            <p><strong>Bio:</strong><pre><%= profile.twitterData.bio_text || 'N/A' %></pre></p>
-            <p><strong>Location:</strong> <%= profile.twitterData.location || 'N/A' %></p>
-            <p><strong>Website:</strong> <%- profile.twitterData.website ? `<a href="${profile.twitterData.website}" target="_blank">${profile.twitterData.website}</a>` : 'N/A' %>
-            <% if (profile.twitterData.website) { %>
-        <button class="analyze-domain-btn" data-website-url="<%= profile.twitterData.website %>" data-profile-id="<%= profile._id %>">
-            <i class="fa-solid fa-network-wired"></i> Analyze
-        </button>
-    <% } %>
-            </p>
-            <p><strong>Followers:</strong> <%= profile.twitterData.followers_count || 'N/A' %></p>
-            <p><strong>Following:</strong> <%= profile.twitterData.following_count || 'N/A' %></p>
-            <p><strong>Join Date:</strong> <%= profile.twitterData.join_date || 'N/A' %></p>
-            <p><strong>Verified:</strong> <%= profile.twitterData.verified_badge ? 'Yes' : 'No' %></p>
-        <% } else { %>
-            <p class="no-results">Scrape was run, but no detailed public information was found for Twitter.</p>
-        <% } %>
-    </div>
-<% } %>
-
-<!-- Instagram Card -->
-<% if (profile.scrapesAttempted.includes('instagram')) { %>
-    <div class="card">
-        <h3><i class="fa-brands fa-instagram"></i> Instagram Profile Details</h3>
-        <% if (profile.instagramData && !profile.instagramData.error && profile.instagramData.username) { %>
-
-            <% if (profile.instagramData.profile_pic_url) { %>
-                <div class="profile-picture-container">
-                    <img src="<%= profile.instagramData.profile_pic_url %>" alt="Instagram Profile Picture" class="profile-picture">
-                    <button class="analyze-image-btn" 
-                            data-image-url="<%= profile.instagramData.profile_pic_url %>"
-                            data-profile-id="<%= profile._id %>">
-                        <i class="fa-solid fa-camera-retro"></i> Analyze Metadata
-                    </button>
-                </div>
-            <% } %>
-
-            <p><strong>Display Name:</strong> <%= profile.instagramData.display_name || 'N/A' %></p>
-            <p><strong>Username:</strong> <%= profile.instagramData.username %></p>
-            <p><strong>Bio:</strong><pre><%= profile.instagramData.bio_text || 'N/A' %></pre></p>
-            <p><strong>Posts:</strong> <%= profile.instagramData.posts_count || 'N/A' %></p>
-            <% if (profile.instagramData.social_media && profile.instagramData.social_media.website) { %>
-    <p><strong>Website (from bio):</strong> 
-        <a href="<%= profile.instagramData.social_media.website %>" target="_blank"><%= profile.instagramData.social_media.website %></a>
-        
-        <button class="analyze-domain-btn" data-website-url="<%= profile.instagramData.social_media.website %>" data-profile-id="<%= profile._id %>">
-            <i class="fa-solid fa-network-wired"></i> Analyze
-        </button>
-    </p>
-<% } %>
-            <p><strong>Followers:</strong> <%= profile.instagramData.followers_count || 'N/A' %></p>
-            <p><strong>Following:</strong> <%= profile.instagramData.following_count || 'N/A' %></p>
-            <p><strong>Private:</strong> <%= profile.instagramData.is_private ? 'Yes' : 'No' %></p>
-            <p><strong>Verified:</strong> <%= profile.instagramData.is_verified ? 'Yes' : 'No' %></p>
-            <% if (profile.instagramData.social_media && Object.values(profile.instagramData.social_media).some(url => url)) { %>
-                <p><strong>Social Media Links (from Instagram):</strong></p>
-                <ul class="platform-list">
-                    <% for (const [platform, url] of Object.entries(profile.instagramData.social_media)) { %>
-                        <% if (url) { %>
-                            <li><strong><%= platform.charAt(0).toUpperCase() + platform.slice(1) %>:</strong> <a href="<%= url %>" target="_blank"><%= url %></a></li>
+        <!-- AI-Extracted Entities Card -->
+        <% if (profile.enrichedEntities && Object.values(profile.enrichedEntities).some(arr => arr && arr.length > 0)) { %>
+            <div class="card" id="section-entities">
+                <h3><i class="fa-solid fa-brain"></i> AI-Extracted Entities</h3>
+                <div class="entity-grid">
+                    <% for (const [type, list] of Object.entries(profile.enrichedEntities)) { %>
+                        <% if (list && list.length > 0) { %>
+                            <div class="entity-category">
+                                <h4><%= type %></h4>
+                                <ul class="entity-list">
+                                    <% list.forEach(item => { %>
+                                        <li>
+                                            <span class="data-font"><%= item.text %></span>
+                                            <% if (item.isEnriched) { %>
+                                                <span class="enriched-info" title="<%= item.info %>"><i class="fa-solid fa-check-circle"></i></span>
+                                            <% } %>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            </div>
                         <% } %>
                     <% } %>
-                </ul>
-            <% } %>
-        <% } else { %>
-            <p class="no-results">Scrape was run, but no detailed public information was found for Instagram.</p>
+                </div>
+            </div>
         <% } %>
-    </div>
-<% } %>
 
-
-<!-- CONSOLIDATED DORKS & LEADS CARD -->
-<% 
-const dorks = profile.googleDorks;
-const hasUsernameDorks = dorks && dorks.username_dorks && dorks.username_dorks.length > 0;
-const hasEntityDorks = dorks && dorks.entity_dorks && Object.keys(dorks.entity_dorks).length > 0;
-%>
-
-<% if (profile.extractedEntities && Object.values(profile.extractedEntities).some(arr => arr && arr.length > 0)) { %>
-    <div class="card">
-        <h3><i class="fa-solid fa-brain"></i> Raw AI Analysis (Extracted Entities)</h3>
-        <% for (const [type, list] of Object.entries(profile.extractedEntities)) { %>
-            <% if (list && list.length > 0) { %>
-                <p>
-                    <strong><%= type %>:</strong>
-                    <span class="entity-list"><%= list.join(', ') %></span>
-                </p>
-            <% } %>
-        <% } %>
-    </div>
-<% } %>
-
-
-<% if (hasUsernameDorks || hasEntityDorks) { %>
-    <div class="card">
-        <h3><i class="fa-brands fa-google"></i> Investigation Leads & Dorks</h3>
-
-        <% if (hasUsernameDorks) { %>
-            <h4>General Dorks (for username: <%= profile.primaryUsername %>)</h4>
-            <ul class="platform-list">
-                <% dorks.username_dorks.forEach(dork => { %>
+        <!-- Investigation Leads Card -->
+        <% const hasDorks = profile.googleDorks && (profile.googleDorks.username_dorks?.length || Object.keys(profile.googleDorks.entity_dorks || {}).length); %>
+        <% if (hasDorks) { %>
+            <div class="card" id="section-leads">
+                <h3><i class="fa-brands fa-google"></i> Investigation Leads (Google Dorks)</h3>
+                <ul class="dork-list entity-list">
+                <% profile.googleDorks.username_dorks.forEach(dork => { %>
                     <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
                 <% }) %>
-            </ul>
-        <% } %>
-
-        <% if (hasEntityDorks) { %>
-            <% if (hasUsernameDorks) { %><hr><% } %>
-            <h4>Entity-Specific Dorks</h4>
-            <ul class="platform-list">
-                <% for (const [entityText, entityDorks] of Object.entries(dorks.entity_dorks)) { %>
-                    <% if (entityDorks && entityDorks.length > 0) { %>
-                        <li>
-                            <strong><%= entityText %></strong>
-                            <ul style="margin-top: 5px; list-style-type: '↳ ';">
-                                <% entityDorks.forEach(dork => { %>
-                                    <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
-                                <% }) %>
-                            </ul>
-                        </li>
-                    <% } %>
+                <% for (const [entity, dorks] of Object.entries(profile.googleDorks.entity_dorks || {})) { %>
+                    <% dorks.forEach(dork => { %>
+                         <li><a href="<%= dork.url %>" target="_blank" rel="noopener noreferrer"><strong>[<%= entity %>]</strong>: <%= dork.text %> <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></li>
+                    <% }) %>
                 <% } %>
-            </ul>
+                </ul>
+            </div>
         <% } %>
     </div>
-<% } %>
+</div>
 
 <%- include('partials/footer') %>

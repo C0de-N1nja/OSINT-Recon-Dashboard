@@ -1,59 +1,74 @@
 <%- include('partials/header', { pageName: 'intermediate' }) %>
 
-<div class="profile-header">
-    <h2>Recon Profile: <span class="target-name"><%= profile.primaryUsername %></span></h2>
-    <p class="step-indicator">Step 2 of 3: Select Platforms for Deep Scraping</p>
-</div>
+    <div class="profile-header">
+        <h2>Recon Profile: <span class="data-font">
+                <%= profile.primaryUsername %>
+            </span></h2>
+        <p class="step-indicator">Step 2/3: Select Platforms for Deep Scraping</p>
+    </div>
 
-<!-- Initial Scan Results -->
-<div class="card">
-    <h3>Initial Scan Complete</h3>
-    <p>Found <%= profile.usernameResults.length %> potential profiles. Select which ones to scrape for more detail.</p>
-    <ul class="platform-list">
-        <% profile.usernameResults.forEach(result => { %>
-            <li><i class="fa-solid fa-check" style="color: #28a745;"></i> <strong><%= result.site %>:</strong> <a href="<%= result.url %>" target="_blank"><%= result.url %></a></li>
-        <% }) %>
-    </ul>
-</div>
+    <!-- Initial Scan Results -->
+    <div class="card">
+        <h3><i class="fa-solid fa-tower-broadcast"></i> Initial Scan Complete</h3>
+        <p>Found <strong>
+                <%= profile.usernameResults.length %>
+            </strong> potential profiles. Select the desired platforms below to run a deep scrape for more intelligence.
+        </p>
+        <ul class="platform-list">
+            <% profile.usernameResults.forEach(result=> { %>
+                <li>
+                    <i class="fa-solid fa-check icon-found"></i>
+                    <strong>
+                        <%= result.site %>:
+                    </strong>
+                    <a href="<%= result.url %>" target="_blank" rel="noopener noreferrer">
+                        <%= result.url %>
+                    </a>
+                </li>
+                <% }) %>
+        </ul>
+    </div>
 
-<!-- Scraping Selection Form -->
-<div class="card">
-    <h3>Deep Scraping Options</h3>
-    <form id="scrape-form" action="/recon/scrape" method="POST" class="scrape-form">
-        <input type="hidden" name="profileId" value="<%= profile._id %>">
+    <!-- Scraping Selection Form -->
+    <div class="card">
+        <h3><i class="fa-solid fa-crosshairs"></i> Deep Scraping Options</h3>
+        <form id="scrape-form" action="/recon/scrape" method="POST" class="scrape-form">
+            <input type="hidden" name="profileId" value="<%= profile._id %>">
 
-        <%
-            const foundPlatforms = new Set(profile.usernameResults.map(p => p.site.toLowerCase()));
-            const availableScrapers = {
+            <% const foundPlatforms=new Set(profile.usernameResults.map(p=> p.site.toLowerCase()));
+                const availableScrapers = {
                 github: { icon: 'fa-brands fa-github', name: 'GitHub' },
                 twitter: { icon: 'fa-brands fa-twitter', name: 'Twitter (X)' },
                 instagram: { icon: 'fa-brands fa-instagram', name: 'Instagram' }
-            };
-        %>
+                };
+                %>
 
-        <div class="checkbox-wrapper">
-             <input type="checkbox" id="select-all">
-             <label for="select-all"><strong>Select All Available</strong></label>
-        </div>
-        <hr>
-
-        <% for (const [platform, data] of Object.entries(availableScrapers)) { %>
-            <% const isFound = foundPlatforms.has(platform); %>
-            <div class="checkbox-wrapper">
-                <input type="checkbox" name="platforms" value="<%= platform %>" id="<%= platform %>" class="platform-checkbox" <%= isFound ? '' : 'disabled' %>>
-                <label for="<%= platform %>" class="<%= isFound ? '' : 'disabled' %>">
-                    <i class="<%= data.icon %>"></i> <%= data.name %>
+                <label class="checkbox-wrapper">
+                    <strong>Select All Available</strong>
+                    <input type="checkbox" id="select-all">
+                    <span class="checkmark"></span>
                 </label>
-            </div>
-        <% } %>
+                <hr style="border-color: var(--color-border); margin: 1.5rem 0;">
 
-        <div class="action-buttons">
-            <button type="submit" class="button-primary">Run Deep Scrape on Selected</button>
-            <a href="/profile/<%= profile._id %>" class="button-link">Skip Scraping - View Final Report</a>
-        </div>
-    </form>
-    
-    <div id="scraping-spinner" class="spinner"></div>
-</div>
+                <% for (const [platform, data] of Object.entries(availableScrapers)) { %>
+                    <% const isFound=foundPlatforms.has(platform); %>
+                        <label class="checkbox-wrapper">
+                            <span class="checkbox-label <%= isFound ? '' : 'disabled' %>">
+                                <i class="<%= data.icon %>"></i>
+                                <%= data.name %>
+                            </span>
+                            <input type="checkbox" name="platforms" value="<%= platform %>" id="<%= platform %>"
+                                class="platform-checkbox" <%=isFound ? '' : 'disabled' %>>
+                            <span class="checkmark"></span>
+                        </label>
+                        <% } %>
 
-<%- include('partials/footer') %>
+                            <div class="action-buttons">
+                                <button type="submit" class="button-link">Run Deep Scrape</button>
+                                <a href="/profile/<%= profile._id %>" class="button-link secondary">Skip & View
+                                    Report</a>
+                            </div>
+        </form>
+    </div>
+
+    <%- include('partials/footer') %>

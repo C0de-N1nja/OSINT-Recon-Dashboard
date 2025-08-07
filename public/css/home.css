@@ -1,14 +1,103 @@
+/* === MAIN SEARCH CARD === */
+.search-card {
+    text-align: center;
+}
+.search-card h2 {
+    font-size: 2rem;
+    font-weight: 900;
+}
+.search-card p {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 1.5rem auto;
+}
+
 .recon-form {
     display: flex;
     gap: 10px;
-    margin-top: 1rem;
+    max-width: 700px;
+    margin: 1rem auto 0 auto;
 }
 .recon-form input[type="text"] {
     flex-grow: 1;
-    padding: 12px;
-    background-color: #1a1a1a;
-    border: 1px solid #444;
+    padding: 12px 15px;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
     border-radius: 5px;
-    color: #e0e0e0;
-    font-size: 1rem;
+    color: var(--color-text-primary);
+    font-size: 1.1rem;
+    font-family: var(--font-data);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.recon-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary-glow);
+}
+.recon-form button {
+    font-size: 1.1rem;
+}
+
+/* === DASHBOARD GRID & PANELS === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.dashboard-panel h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.dashboard-panel .profile-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard-panel .profile-list-item {
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-panel .profile-list-item a {
+    display: block;
+    padding: 1rem;
+    background-color: var(--color-background);
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-panel .profile-list-item a:hover {
+    background-color: rgba(0, 170, 255, 0.05);
+    border-color: var(--color-primary);
+}
+
+.dashboard-panel .profile-list-item .profile-name {
+    font-family: var(--font-data);
+    color: var(--color-text-primary);
+    font-size: 1.1rem;
+}
+
+.dashboard-panel .profile-list-item .monitor-icon {
+    color: var(--color-secondary);
+}
+
+.dashboard-panel .no-results {
+    color: var(--color-text-secondary);
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+    border: 1px dashed var(--color-border);
+    border-radius: 5px;
 }

@@ -1,28 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ethical OSINT Dashboard</title>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 
+    <!-- VIS.js for Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
 
+    <!-- Core & Page-Specific Styles -->
     <link rel="stylesheet" href="/css/global.css">
-    <% if (typeof pageName !== 'undefined') { %>
+    <% if (typeof pageName !=='undefined' ) { %>
         <link rel="stylesheet" href="/css/<%= pageName %>.css">
-    <% } %>
+        <% } %>
 </head>
+
 <body>
     <nav>
         <div class="container nav-container">
-            <h1><a href="/" class="nav-title">Ethical OSINT Dashboard</a></h1>
-            
+            <h1 class="nav-title"><a href="/">Ethical OSINT Dashboard</a></h1>
+
             <% if (locals.user) { %>
                 <div class="nav-user-info">
-                    <span>Welcome, <%= user.name.split(' ')[0] %></span>
+                    <span class="data-font">Welcome, <%= user.name.split(' ')[0] %></span>
                     <a href="/auth/logout" class="button-link-logout">Logout</a>
                 </div>
             <% } %>

@@ -1,38 +1,40 @@
-<%- include('partials/header', { pageName: 'register' }) %>
+<%- include('partials/header', { pageName: 'auth' }) %>
 
-<div class="auth-container">
-    <div class="card">
-        <h2>Create an Account</h2>
+    <div class="auth-container">
+        <div class="card">
+            <h2>Create an Account</h2>
 
-        <%# Display any error messages passed from the controller %>
-        <% if (locals.error) { %>
-            <div class="error-message"><%= error %></div>
-        <% } %>
+            <%# Display any error messages passed from the controller %>
+                <% if (locals.error) { %>
+                    <div class="error-message">
+                        <%= error %>
+                    </div>
+                    <% } %>
 
-        <form action="/auth/register" method="POST">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" name="name" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required>
-            </div>
-            <button type="submit" class="button-primary">Register</button>
-        </form>
+                        <form action="/auth/register" method="POST">
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            </div>
+                            <button type="submit" class="button-primary">Register</button>
+                        </form>
 
-        <div class="auth-switch">
-            <p>Already have an account? <a href="/auth/login">Login</a></p>
+                        <div class="auth-switch">
+                            <p>Already have an account? <a href="/auth/login">Login</a></p>
+                        </div>
         </div>
     </div>
-</div>
 
-<%- include('partials/footer') %>
+    <%- include('partials/footer') %>

@@ -4,6 +4,7 @@ const { calculateRiskScore, enrichProfileEntities, generateGraphData } = require
 const { performDeepScan } = require('../utils/reconService');
 const puppeteer = require('puppeteer');
 const HistoryEvent = require('../models/HistoryEvent');
+const moment = require('moment');
 
 function executeScript(command) {
     return new Promise((resolve) => {
@@ -55,14 +56,33 @@ function executeScriptWithStdin(commandWithArgs, data) {
     });
 }
 
+exports.renderHome = async (req, res) => {
+    try {
+        const recentProfiles = await reconProfile.find({})
+            .sort({ reconDate: -1 })
+            .limit(5)
+            .lean(); 
 
-// --- ROUTE HANDLERS ---
+        const monitoredProfiles = await reconProfile.find({ isMonitoring: true })
+            .sort({ primaryUsername: 1 })
+            .lean();
 
-exports.renderHome = (req, res) => {
-    res.render("index", { 
-        pageName: 'home',
-        user: req.user // <-- ADD THIS
-    });
+        res.render("index", { 
+            pageName: 'home',
+            user: req.user,
+            recentProfiles,    
+            monitoredProfiles  
+        });
+    } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        res.render("index", {
+            pageName: 'home',
+            user: req.user,
+            recentProfiles: [],
+            monitoredProfiles: [],
+            error: "Could not load dashboard data."
+        });
+    }
 };
 
 exports.startInitialScan = (req, res) => {
@@ -150,7 +170,8 @@ exports.getProfile = async (req, res) => {
             profile: foundProfile.toObject(),
             graphData: JSON.stringify(graphData), 
             pageName: 'profile',
-            user: req.user // <-- ADD THIS
+            user: req.user,
+            moment: moment
         });
     } catch (err) {
         console.log("[ERROR] Error fetching profile:", err);
