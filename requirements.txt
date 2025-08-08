@@ -15,8 +15,9 @@ tqdm==4.66.4
 # === CLI & Debugging ===
 colorama==0.4.6
 
-# === Optional (for JSON/YAML/config parsing if used later) ===
+# === Configuration & Data Parsing ===
 pyyaml==6.0.1
+python-dotenv==1.0.0
 
 # === Image Processing ===
 Pillow==11.3.0
@@ -24,3 +25,7 @@ Pillow==11.3.0
 # === Domain Intelligence ===
 python-whois==0.8.0
 dnspython==2.6.1
+
+# === Additional Utilities ===
+psutil==5.9.8
+schedule==1.2.0

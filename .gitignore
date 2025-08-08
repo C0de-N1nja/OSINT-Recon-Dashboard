@@ -1,21 +1,42 @@
-# Node.js dependencies
+# Dependencies
 node_modules/
-
-# Logs
-*.log
+venv/
+__pycache__/
 
 # Environment variables
 .env
 
-# Python cache
-__pycache__/
-*.pyc
+# Logs
+*.log
+npm-debug.log*
 
-# OS/editor junk
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Database
+*.sqlite
+
+# ChromeDriver
+drivers/chromedriver*
+drivers/chromedriver-*
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-instagram_debug*
-twitter_profile*
-
-phases.docx
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
