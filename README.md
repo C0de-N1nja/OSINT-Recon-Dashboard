@@ -7,10 +7,11 @@
   <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-6.x-47A248?style=for-the-badge&logo=mongodb">
   <img alt="Selenium" src="https://img.shields.io/badge/Selenium-4.x-43B02A?style=for-the-badge&logo=selenium">
   <img alt="SpaCy" src="https://img.shields.io/badge/spaCy-3.7-09A3D5?style=for-the-badge&logo=spacy">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-green.svg">
-  <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg">
-  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/C0de-N1nja/OSINT-Recon-Dashboard">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative&logoColor=white">
+  <img alt="Contributions" src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge&logo=github">
+  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/C0de-N1nja/OSINT-Recon-Dashboard?style=for-the-badge&logo=git&logoColor=white">
 </p>
+
 
 <p align="center">
   <i>An advanced, full-stack web application designed for comprehensive Open-Source Intelligence (OSINT) gathering and analysis</i>
